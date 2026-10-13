@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>커버드콜 계산기 · 똑재TV</title>
+<meta name="description" content="국내상장 커버드콜 ETF 61종의 실제 종가·분배금·과세표준액으로, 분배금으로 생활했을 때와 본주를 팔아 생활했을 때를 비교합니다. 분배금 재투자 백테스트와 세대별 현황판 포함.">
+<meta property="og:title" content="커버드콜 계산기 · 똑재TV">
+<meta property="og:description" content="높은 분배금, 정말 남는 장사일까? 국내상장 커버드콜 ETF 실제 데이터로 생활비 대결·재투자 백테스트.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+
+  :root {
+    --bg: #F5EFE6;
+    --bg-alt: #EFE7DA;
+    --ink: #1A1A1A;
+    --ink-soft: #4A4A4A;
+    --ink-mute: #8B8276;
+    --accent: #D9542B;
+    --accent-soft: #F4D5C4;
+    --border: #E5DCC8;
+    --white: #FBF7F0;
+    --brown: #8B6F47;
+    --beige-gold: #C4A57B;
+    --dark-warm: #3A2F26;
+    --dark-warm-soft: #5A4A3D;
+    --green: #4A5A4A;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    padding: 32px 24px;
+    font-weight: 600;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+
+  /* 헤더 */
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-icon {
+    width: 40px; height: 40px; background: var(--dark-warm); color: var(--white);
+    border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 20px;
+  }
+  .logo-name { font-size: 18px; font-weight: 900; letter-spacing: -0.5px; }
+  .logo-sub { font-size: 10px; color: var(--ink-mute); font-weight: 700; letter-spacing: 1px; }
+
+  /* 히어로 */
+  .hero { margin-bottom: 32px; }
+  .tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--white); border: 1.5px solid var(--accent); color: var(--accent);
+    padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 700; letter-spacing: 0.5px;
+    margin-bottom: 20px;
+  }
+  .tag .dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; }
+  .hero-title { font-size: 64px; font-weight: 900; letter-spacing: -2.5px; line-height: 1.05; margin-bottom: 20px; }
+  .underline-mark { background: linear-gradient(transparent 60%, var(--accent-soft) 60%); padding: 0 4px; }
+  .hero-desc { font-size: 17px; color: var(--ink-soft); font-weight: 500; line-height: 1.7; }
+
+  /* 상단 CTA */
+  .top-cta {
+    background: var(--bg-alt); border: 1px solid var(--border); border-radius: 16px;
+    padding: 18px 24px; margin-bottom: 32px;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px;
+  }
+  .top-cta-text { font-size: 14px; color: var(--ink-soft); font-weight: 600; }
+  .top-cta-links { display: flex; gap: 8px; flex-wrap: wrap; }
+  .top-cta-link {
+    display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px;
+    font-size: 13px; font-weight: 700; text-decoration: none;
+    background: var(--white); border: 1.5px solid var(--border); color: var(--ink);
+  }
+  .top-cta-link.primary { background: var(--accent); color: var(--white); border-color: var(--accent); }
+  .naver-mark {
+    display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px;
+    background: #03C75A; color: #FFFFFF; font-weight: 900; font-size: 11px; border-radius: 3px;
+    line-height: 1; letter-spacing: -0.5px; flex-shrink: 0;
+  }
+
+  /* 카드 / 스텝 */
+  .card { background: var(--white); border: 1px solid var(--border); border-radius: 20px; padding: 28px; margin-bottom: 32px; }
+  .step-label { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .step-line { width: 28px; height: 2px; background: var(--accent); }
+  .step-text { font-size: 12px; font-weight: 800; letter-spacing: 1.5px; color: var(--accent); }
+  .card-title { font-size: 24px; font-weight: 900; letter-spacing: -0.6px; margin-bottom: 6px; }
+  .card-subtitle { font-size: 14px; color: var(--ink-mute); font-weight: 500; margin-bottom: 22px; line-height: 1.6; }
+
+  /* 모드 탭 */
+  .mode-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .mode-tab {
+    text-align: left; background: var(--white); border: 1.5px solid var(--border); border-radius: 16px;
+    padding: 18px 20px; cursor: pointer; font-family: inherit; color: var(--ink);
+    transition: all 0.15s ease;
+  }
+  .mode-tab:hover { border-color: var(--accent); }
+  .mode-tab .mt-num { font-size: 11px; font-weight: 800; letter-spacing: 1px; color: var(--ink-mute); margin-bottom: 6px; display: block; }
+  .mode-tab .mt-title { font-size: 18px; font-weight: 900; letter-spacing: -0.4px; display: block; margin-bottom: 4px; }
+  .mode-tab .mt-desc { font-size: 13px; color: var(--ink-mute); font-weight: 500; display: block; }
+  .mode-tab.active { background: var(--dark-warm); border-color: var(--dark-warm); color: var(--white); }
+  .mode-tab.active .mt-num { color: var(--accent-soft); }
+  .mode-tab.active .mt-desc { color: #D9D2C5; }
+
+  /* 입력 */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .input-group { margin-bottom: 18px; }
+  .input-group:last-child { margin-bottom: 0; }
+  .label { display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.5px; color: var(--ink-soft); margin-bottom: 8px; }
+  input[type=number], select {
+    background: var(--white); border: 1.5px solid var(--border); border-radius: 10px;
+    padding: 12px 14px; font-family: inherit; font-size: 16px; color: var(--ink); font-weight: 700;
+    transition: all 0.15s ease; width: 100%;
+  }
+  input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .input-hint { font-size: 12px; color: var(--ink-mute); font-weight: 600; margin-top: 6px; }
+  .input-wrap { position: relative; }
+  .input-wrap input { padding-right: 130px; }
+  /* 숫자 바로 뒤에 붙는 단위 (만원·년·%) — 위치는 JS가 글자 폭을 재서 맞춘다 */
+  .input-unit { position: absolute; top: 50%; transform: translateY(-50%); left: 0; pointer-events: none;
+    font-size: 15px; font-weight: 700; color: var(--ink-mute); white-space: nowrap; visibility: hidden; }
+  .input-currency {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    background: var(--accent-soft); color: var(--accent); font-size: 13px; font-weight: 800;
+    padding: 5px 10px; border-radius: 6px; pointer-events: none; letter-spacing: -0.3px;
+    white-space: nowrap; max-width: 110px; overflow: hidden; text-overflow: ellipsis;
+  }
+  .input-currency.empty { background: transparent; color: var(--ink-mute); font-weight: 600; }
+  .adv-set { margin-top: 20px; border: 1px solid var(--border); border-radius: 16px; background: var(--bg); padding: 0 20px; }
+  .adv-set > summary { cursor: pointer; list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 16px 0; }
+  .adv-set > summary::-webkit-details-marker { display: none; }
+  .adv-set > summary::before { content: '+'; display: inline-flex; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 800; align-items: center; justify-content: center; font-size: 15px; }
+  .adv-set[open] > summary::before { content: '−'; }
+  .adv-set-title { font-weight: 800; font-size: 15px; color: var(--dark-warm); }
+  .adv-set-sum { font-size: 13px; font-weight: 700; color: var(--brown); }
+  .sub-card { background: var(--bg); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+  .sub-card-title { font-size: 15px; font-weight: 800; margin-bottom: 14px; letter-spacing: -0.3px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .chip {
+    background: var(--white); border: 1.5px solid var(--border); color: var(--ink-soft);
+    border-radius: 999px; padding: 5px 12px; font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .chip.on { background: var(--accent); border-color: var(--accent); color: var(--white); }
+  .is-hidden { display: none !important; }
+  .fixed-note {
+    background: var(--accent-soft); color: var(--accent); border-radius: 10px; padding: 12px 14px;
+    font-size: 13.5px; font-weight: 700; line-height: 1.55;
+  }
+
+  /* 토글 */
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .toggle-text-title { font-size: 15px; font-weight: 800; }
+  .toggle-text-desc { font-size: 13px; color: var(--ink-mute); font-weight: 500; margin-top: 2px; }
+  .toggle-switch { position: relative; display: inline-block; width: 56px; height: 30px; flex-shrink: 0; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider { position: absolute; cursor: pointer; inset: 0; background: #C4B8A3; transition: 0.25s; border-radius: 30px; }
+  .toggle-slider:before {
+    position: absolute; content: ""; height: 22px; width: 22px; left: 4px; bottom: 4px;
+    background: var(--white); transition: 0.25s; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .toggle-switch input:checked + .toggle-slider { background: var(--accent); }
+  .toggle-switch input:checked + .toggle-slider:before { transform: translateX(26px); }
+  .inflation-body { margin-top: 18px; padding-top: 18px; border-top: 1px dashed var(--border); }
+  .radio-row { display: flex; flex-direction: column; gap: 8px; }
+  .radio-opt {
+    display: flex; gap: 10px; align-items: flex-start; background: var(--white); border: 1.5px solid var(--border);
+    border-radius: 12px; padding: 12px 14px; cursor: pointer; transition: all 0.15s ease;
+  }
+  .radio-opt:hover { border-color: var(--accent); }
+  .radio-opt input { margin-top: 4px; accent-color: var(--accent); }
+  .radio-opt .ro-title { font-size: 14px; font-weight: 800; }
+  .radio-opt .ro-desc { font-size: 12.5px; color: var(--ink-mute); font-weight: 500; margin-top: 2px; }
+  .radio-opt.on { border-color: var(--accent); background: #FCEFE6; }
+
+  /* 결과 */
+  .verdict {
+    background: var(--dark-warm); color: var(--white); border-radius: 20px; padding: 30px 32px; margin-bottom: 20px;
+  }
+  .verdict-label { font-size: 12px; font-weight: 800; letter-spacing: 1.5px; color: var(--accent-soft); margin-bottom: 10px; }
+  .verdict-main { font-size: 30px; font-weight: 900; letter-spacing: -0.8px; line-height: 1.3; }
+  .verdict-main .hl { color: #FFB38F; }
+  .verdict-sub { font-size: 15px; color: #D9D2C5; font-weight: 500; margin-top: 12px; line-height: 1.7; }
+  .verdict-sub strong { color: var(--white); }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+  .stat-card { background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 22px; }
+  .stat-card.accent { background: var(--accent); border-color: var(--accent); color: var(--white); }
+  .stat-card.accent .stat-label, .stat-card.accent .stat-sub { color: #FDE3D6; }
+  .stat-card.accent-green { background: var(--green); border-color: var(--green); color: var(--white); }
+  .stat-card.accent-green .stat-label, .stat-card.accent-green .stat-sub { color: #B8C4B8; }
+  .stat-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--ink-mute); margin-bottom: 8px; }
+  .stat-value { font-size: 28px; font-weight: 900; letter-spacing: -1px; line-height: 1.15; }
+  .stat-sub { font-size: 13px; color: var(--ink-mute); margin-top: 6px; font-weight: 500; line-height: 1.5; }
+
+  .chart-title { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 4px; }
+  .chart-subtitle { font-size: 13px; color: var(--ink-mute); font-weight: 500; margin-bottom: 18px; line-height: 1.6; }
+  .chart-container { position: relative; height: 360px; width: 100%; }
+  .chart-container.sm { height: 300px; }
+
+  /* 시나리오 표 */
+  .table-wrap { overflow-x: auto; margin-top: 16px; border-radius: 12px; }
+  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 760px; }
+  .data-table th {
+    background: var(--bg-alt); padding: 12px 10px; text-align: right; font-weight: 700; color: var(--ink-soft);
+    font-size: 11.5px; border-bottom: 1.5px solid var(--border); white-space: nowrap;
+  }
+  .data-table th:first-child { text-align: center; }
+  .data-table td {
+    padding: 11px 10px; text-align: right; border-bottom: 1px solid var(--border);
+    font-weight: 600; color: var(--ink); white-space: nowrap;
+  }
+  .data-table td:first-child { text-align: center; font-weight: 800; color: var(--accent); }
+  .data-table tbody tr:hover { background: var(--bg-alt); }
+  .data-table .highlight-row { background: var(--accent-soft); }
+  .data-table .highlight-row td { font-weight: 800; }
+  .data-table td.c-accent { color: var(--accent); font-weight: 800; }
+  .data-table td.c-brown { color: var(--brown); }
+  .data-table td.c-green { color: var(--green); }
+  .data-table td.c-left { text-align: left; }
+  .scen-table { min-width: 560px; }
+  .lump-note { display: block; margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.35); }
+  .tag-mini.base { background: var(--brown); }
+  .tag-mini {
+    display: inline-block; font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 999px;
+    background: var(--accent); color: var(--white); margin-left: 6px; vertical-align: 1px;
+  }
+  /* 연차별 표: 시점 · 목표 도달 배지 · 달성률 막대 */
+  .yr-sub { display: block; font-size: 10.5px; font-weight: 600; color: var(--ink-mute); margin-top: 1px; }
+  .hit-pill { display: inline-block; font-size: 10px; font-weight: 800; padding: 1px 7px; border-radius: 999px; background: var(--accent); color: var(--white); margin-top: 3px; }
+  .prog { display: inline-block; width: 52px; height: 6px; border-radius: 3px; background: var(--bg-alt); vertical-align: middle; margin-left: 8px; overflow: hidden; }
+  .prog i { display: block; height: 100%; background: var(--beige-gold); border-radius: 3px; }
+  .prog.done i { background: var(--accent); }
+  /* 그래프 기준 전환 (미래 금액 / 오늘 돈 가치) */
+  .chart-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+  .chart-head > div:first-child { flex: 1 1 320px; min-width: 0; }
+  .seg { display: inline-flex; border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden; flex: none; }
+  .seg button { font: inherit; font-size: 12.5px; font-weight: 700; padding: 7px 12px; border: 0; background: var(--white); color: var(--ink-soft); cursor: pointer; }
+  .seg button + button { border-left: 1.5px solid var(--border); }
+  .seg button.on { background: var(--dark-warm); color: var(--white); }
+  .seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .infl-note { display: block; margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.35); }
+
+  /* 인사이트 */
+  .insight-box { background: var(--dark-warm); color: var(--white); border-radius: 20px; padding: 36px; margin-bottom: 24px; }
+  .insight-label { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+  .insight-label-text { font-size: 12px; font-weight: 800; letter-spacing: 1.5px; color: var(--accent-soft); }
+  .insight-title { font-size: 24px; font-weight: 900; margin-bottom: 16px; letter-spacing: -0.5px; line-height: 1.35; }
+  .insight-desc { font-size: 15px; line-height: 1.75; color: #D9D2C5; font-weight: 500; }
+  .insight-desc strong { color: var(--white); }
+  .insight-cta {
+    margin-top: 28px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.12);
+    display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+  }
+  .insight-cta-text { font-size: 14px; color: #D9D2C5; font-weight: 600; margin-right: 8px; }
+  .cta-link {
+    display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px;
+    font-size: 13px; font-weight: 700; text-decoration: none; transition: all 0.2s ease; letter-spacing: -0.2px;
+  }
+  .cta-link.primary { background: var(--accent); color: var(--white); }
+  .cta-link.primary:hover { background: #E66740; transform: translateY(-1px); }
+  .cta-link.secondary { background: rgba(255,255,255,0.08); color: var(--white); border: 1px solid rgba(255,255,255,0.15); }
+  .cta-link.secondary:hover { background: rgba(255,255,255,0.15); transform: translateY(-1px); }
+
+  .link-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+  .btn {
+    background: var(--dark-warm); color: var(--white); border: none; padding: 11px 18px; border-radius: 12px;
+    font-family: inherit; font-weight: 700; cursor: pointer; transition: all 0.15s ease; font-size: 14px;
+    display: inline-flex; align-items: center; gap: 8px; text-decoration: none;
+  }
+  .btn:hover { background: var(--accent); }
+  .btn.ghost { background: var(--white); color: var(--ink); border: 1.5px solid var(--border); }
+  .btn.ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .from-bar {
+    display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: space-between;
+    background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 14px; padding: 14px 18px;
+    margin-bottom: 24px; font-size: 14.5px; font-weight: 700; line-height: 1.6;
+  }
+  .from-bar a { color: var(--accent); font-weight: 800; white-space: nowrap; text-decoration: none; }
+
+  .hub-back { display: inline-block; font-size: 13px; color: var(--ink-mute); font-weight: 600; text-decoration: none; margin-bottom: 12px; }
+  .hub-back:hover { color: var(--accent); }
+  footer { text-align: center; font-size: 12.5px; color: var(--ink-mute); font-weight: 500; line-height: 1.8; padding: 24px 0 8px; }
+
+
+  @media (max-width: 1100px) {
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 768px) {
+    body { padding: 16px 12px; }
+    header { margin-bottom: 24px; }
+    .card { padding: 18px 16px !important; margin-bottom: 20px !important; border-radius: 16px !important; }
+    .hero-title { font-size: 34px !important; letter-spacing: -1.2px !important; line-height: 1.18 !important; }
+    .hero-desc { font-size: 15px; }
+    .hero-desc br { display: none; }
+    .top-cta { flex-direction: column; align-items: stretch; padding: 16px; }
+    .top-cta-links { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .top-cta-link { justify-content: center; }
+    .mode-tabs { grid-template-columns: 1fr; gap: 8px; }
+    .mode-tab { padding: 14px 16px; }
+    .mode-tab .mt-title { font-size: 16px; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr !important; gap: 14px !important; }
+    .grid-4 { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+    .sub-card { padding: 16px; }
+    .input-wrap input { padding-right: 112px; }
+    .input-currency { max-width: 96px; font-size: 12px; }
+    .card-title { font-size: 20px; }
+    .verdict { padding: 22px 18px; border-radius: 16px; }
+    .verdict-main { font-size: 22px; letter-spacing: -0.5px; }
+    .verdict-sub { font-size: 14px; }
+    .stat-grid { grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+    .stat-card { padding: 16px !important; border-radius: 14px !important; }
+    .stat-value { font-size: 21px !important; }
+    .stat-sub { font-size: 12px; }
+    .chart-title { font-size: 15px; line-height: 1.4; }
+    .chart-container { height: 280px !important; }
+    .chart-container.sm { height: 260px !important; }
+    .insight-box { padding: 24px 18px; border-radius: 16px; }
+    .insight-title { font-size: 19px !important; }
+    .insight-cta { flex-direction: column; align-items: stretch; }
+    .cta-link { justify-content: center; }
+    .table-wrap { margin: 16px -16px 0; padding: 0 16px; -webkit-overflow-scrolling: touch; }
+    .data-table { font-size: 11.5px; min-width: 640px; }
+    .scen-table { min-width: 480px; }
+    .data-table th { padding: 8px 6px; font-size: 10.5px; }
+    .data-table td { padding: 8px 6px; }
+  }
+  @media (max-width: 380px) {
+    .hero-title { font-size: 29px !important; }
+    .stat-grid { grid-template-columns: 1fr; }
+    .top-cta-links { grid-template-columns: 1fr !important; }
+  }
+
+  /* 연 비용 · 하나만 바꾸면 · 결과 복사 · 계산 방법 */
+  .fee-note { display: block; margin-top: 10px; font-size: 13.5px; color: var(--accent-soft); font-weight: 700; }
+  .scen-r-eff { display: block; font-size: 10.5px; font-weight: 700; color: var(--ink-mute); margin-top: 2px; }
+  .sens-table { min-width: 0; }
+  .sens-table td:first-child { white-space: normal; color: var(--ink); line-height: 1.4; }
+  .sens-sub { display: block; font-size: 11.5px; font-weight: 600; color: var(--ink-mute); margin-top: 2px; }
+  .sens-table th:first-child { text-align: left; }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .method-box { background: var(--white); border: 1px solid var(--border); border-radius: 20px; padding: 24px 28px; margin-bottom: 24px; }
+  .method-box h3 { font-size: 16px; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 10px; }
+  .method-box h3 + ul { margin-bottom: 18px; }
+  .method-box ul { list-style: none; }
+  .method-box li { position: relative; padding-left: 14px; font-size: 13.5px; color: var(--ink-soft); font-weight: 500; line-height: 1.7; margin-bottom: 4px; word-break: keep-all; }
+  .method-box li::before { content: ''; position: absolute; left: 2px; top: 10px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+  .method-box li:last-child { margin-bottom: 0; }
+  @media (max-width: 768px) {
+    .sens-table { min-width: 0; font-size: 12px; }
+    .method-box { padding: 18px 16px; border-radius: 16px; }
+    .btn-row { width: 100%; }
+    .btn-row .btn { flex: 1; justify-content: center; }
+  }
+  @media (max-width: 768px) {
+    .seg { width: 100%; }
+    .seg button { flex: 1; padding: 8px 6px; font-size: 12px; }
+  }
+
+  /* ===== 커버드콜 계산기 전용 ===== */
+  .data-line { font-size: 12.5px; color: var(--ink-mute); font-weight: 600; margin: -14px 0 24px; line-height: 1.7; }
+  .data-line b { color: var(--ink-soft); }
+  .panel { display: none; }
+  .panel.on { display: block; }
+  input[type=date] {
+    background: var(--white); border: 1.5px solid var(--border); border-radius: 10px;
+    padding: 11px 12px; font-family: inherit; font-size: 15px; color: var(--ink); font-weight: 700; width: 100%;
+  }
+  input[type=date]:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  select optgroup { font-weight: 800; color: var(--brown); }
+  .pair-hint { font-size: 12.5px; color: var(--brown); font-weight: 700; margin-top: 8px; line-height: 1.6; }
+  .radio-row.h { flex-direction: row; flex-wrap: wrap; }
+  .radio-row.h .radio-opt { flex: 1 1 200px; }
+  .inline-input { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; }
+  .inline-input input { width: 90px; padding: 8px 10px; font-size: 15px; }
+  .inline-input span { font-size: 13px; font-weight: 700; color: var(--ink-soft); }
+  .vs-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .vs-card { border-radius: 18px; padding: 22px 24px; border: 1.5px solid var(--border); background: var(--white); }
+  .vs-card.a { border-color: var(--accent); }
+  .vs-card.b { border-color: var(--brown); }
+  .vs-who { font-size: 12px; font-weight: 800; letter-spacing: 1px; margin-bottom: 6px; }
+  .vs-card.a .vs-who { color: var(--accent); }
+  .vs-card.b .vs-who { color: var(--brown); }
+  .vs-name { font-size: 15px; font-weight: 800; margin-bottom: 14px; line-height: 1.4; word-break: keep-all; }
+  .vs-line { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 7px 0; border-top: 1px dashed var(--border); font-size: 13.5px; color: var(--ink-soft); }
+  .vs-line b { font-size: 17px; font-weight: 900; color: var(--ink); letter-spacing: -0.4px; white-space: nowrap; }
+  .vs-line.big b { font-size: 22px; }
+  .vs-card.a .vs-line.big b { color: var(--accent); }
+  .vs-card.b .vs-line.big b { color: var(--brown); }
+  .skull { display: inline-block; margin-top: 10px; font-size: 12.5px; font-weight: 800; color: #2E5E8A; background: #E3ECF4; border-radius: 8px; padding: 4px 10px; }
+  .up { color: #C8361C !important; }
+  .down { color: #2E5E8A !important; }
+  .board-tools { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin-bottom: 6px; }
+  .board-tools .lbl { font-size: 12px; font-weight: 800; color: var(--ink-soft); margin-right: 2px; }
+  .board-table { min-width: 860px; }
+  .board-table th { cursor: pointer; user-select: none; }
+  .board-table th.sorted::after { content: ' ▼'; color: var(--accent); }
+  .board-table th.sorted.asc::after { content: ' ▲'; }
+  .board-table td:first-child { text-align: left; color: var(--ink); font-weight: 700; white-space: normal; min-width: 230px; }
+  .board-table th:first-child { text-align: left; }
+  .board-table tbody tr { cursor: pointer; }
+  .b-name { font-size: 13.5px; font-weight: 800; line-height: 1.35; }
+  .b-meta { display: block; font-size: 11px; color: var(--ink-mute); font-weight: 600; margin-top: 3px; }
+  .gen { display: inline-block; font-size: 10.5px; font-weight: 800; padding: 1px 7px; border-radius: 999px; margin-right: 4px; vertical-align: 1px; }
+  .gen.g1 { background: #F4D5C4; color: #A03D1F; }
+  .gen.g2 { background: #EADFCB; color: #8B6F47; }
+  .gen.g25 { background: #E5E0D2; color: #5A4A3D; }
+  .gen.g3 { background: #DCE5DC; color: #4A5A4A; }
+  .gen.gx { background: var(--bg-alt); color: var(--ink-mute); }
+  .cell-sub { display: block; font-size: 10.5px; color: var(--ink-mute); font-weight: 600; margin-top: 1px; }
+  .gap-bar { display: inline-block; width: 46px; height: 6px; border-radius: 3px; background: var(--bg-alt); vertical-align: middle; margin-left: 6px; position: relative; overflow: hidden; }
+  .gap-bar i { position: absolute; top: 0; bottom: 0; left: 0; background: var(--beige-gold); }
+  .muted { color: var(--ink-mute) !important; font-weight: 600 !important; }
+  .gen-guide { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 14px; }
+  .gen-guide div { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 14px; font-size: 12.5px; color: var(--ink-soft); font-weight: 500; line-height: 1.6; word-break: keep-all; }
+  .gen-guide b { display: block; font-size: 14px; font-weight: 900; color: var(--ink); margin-bottom: 4px; }
+  .loading { padding: 40px 0; text-align: center; color: var(--ink-mute); font-weight: 700; }
+  .err { background: #FCE8E3; border: 1px solid var(--accent); color: #A03D1F; border-radius: 12px; padding: 14px 16px; font-weight: 700; font-size: 14px; }
+  @media (max-width: 768px) {
+    .data-line { margin-top: -6px; }
+    .vs-row { grid-template-columns: 1fr; gap: 10px; }
+    .vs-card { padding: 16px 16px; border-radius: 14px; }
+    .vs-line.big b { font-size: 19px; }
+    .board-table { min-width: 720px; }
+    .board-table td:first-child { min-width: 180px; }
+    .gen-guide { grid-template-columns: 1fr 1fr; }
+    .radio-row.h .radio-opt { flex-basis: 100%; }
+  }
+
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="https://ttokjaetv.github.io/" class="hub-back">← 똑재TV 계산기 모음</a>
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon">똑</div>
+      <div>
+        <div class="logo-name">똑재TV</div>
+        <div class="logo-sub">COVERED CALL CALCULATOR</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="hero">
+    <span class="tag"><span class="dot"></span>커버드콜 계산기</span>
+    <h1 class="hero-title">
+      높은 분배금,<br>
+      <span class="underline-mark">정말 남는 장사</span>일까?
+    </h1>
+    <p class="hero-desc">
+      국내상장 커버드콜 ETF의 실제 종가·분배금·과세표준액으로 계산합니다.<br>
+      분배금으로 생활한 사람과 본주를 팔아 생활한 사람, 몇 년 뒤 누구에게 더 많이 남았을까요?
+    </p>
+  </div>
+
+  <div class="top-cta">
+    <div class="top-cta-text">💡 <strong>커버드콜, 어떤 구조인지부터</strong> 궁금하신가요? 똑재TV에서 매주 만나보세요.</div>
+    <div class="top-cta-links">
+      <a href="https://www.youtube.com/@ttok_jae" target="_blank" rel="noopener" class="top-cta-link primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+        똑재TV 구독하기
+      </a>
+      <a href="https://cafe.naver.com/ttokjae" target="_blank" rel="noopener" class="top-cta-link">
+        <span class="naver-mark">N</span>
+        평생 ETF 투자 카페
+      </a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="step-label"><div class="step-line"></div><span class="step-text">무엇이 궁금하세요?</span></div>
+    <div class="mode-tabs" role="tablist">
+      <button class="mode-tab active" data-tab="duel" role="tab">
+        <span class="mt-num">01</span>
+        <span class="mt-title">생활비 대결</span>
+        <span class="mt-desc">분배금으로 생활 vs 본주 팔아서 생활</span>
+      </button>
+      <button class="mode-tab" data-tab="bt" role="tab">
+        <span class="mt-num">02</span>
+        <span class="mt-title">분배금 재투자 백테스트</span>
+        <span class="mt-desc">분배금을 어디에 다시 넣느냐에 따라</span>
+      </button>
+      <button class="mode-tab" data-tab="board" role="tab">
+        <span class="mt-num">03</span>
+        <span class="mt-title">커버드콜 현황판</span>
+        <span class="mt-desc">얼마나 올랐고, 얼마나 주고, 얼마나 과세되나</span>
+      </button>
+    </div>
+  </div>
+  <p class="data-line" id="data-line">데이터 불러오는 중…</p>
+
+  <div id="app-error"></div>
+
+  <!-- ================= 01 생활비 대결 ================= -->
+  <section class="panel on" id="panel-duel">
+    <div class="card">
+      <div class="step-label"><div class="step-line"></div><span class="step-text">STEP 01 / 누구와 누구를 비교할까요?</span></div>
+      <h2 class="card-title">커버드콜과 본주를 고르세요</h2>
+      <p class="card-subtitle">같은 돈으로 출발해서, 커버드콜은 분배금(세후)만으로 생활하고 본주는 필요한 만큼 팔아서 생활합니다.</p>
+      <div class="grid-2">
+        <div class="input-group">
+          <label class="label" for="d-cc">커버드콜 ETF</label>
+          <select id="d-cc"></select>
+        </div>
+        <div class="input-group">
+          <label class="label" for="d-base">비교할 본주</label>
+          <select id="d-base"></select>
+          <div class="input-hint">커버드콜이 따라가는 지수의 일반 ETF를 자동으로 골라 둡니다. 바꿔도 됩니다.</div>
+        </div>
+      </div>
+      <div class="pair-hint" id="d-pair-hint"></div>
+    </div>
+
+    <div class="card">
+      <div class="step-label"><div class="step-line"></div><span class="step-text">STEP 02 / 조건</span></div>
+      <h2 class="card-title">은퇴 자금과 기간</h2>
+      <p class="card-subtitle">금액은 <strong>만원 단위</strong>입니다. 두 사람 모두 시작일 종가에 한 번에 삽니다(거치식).</p>
+      <div class="grid-3">
+        <div class="input-group">
+          <label class="label" for="d-initial">초기 투자금</label>
+          <div class="input-wrap">
+            <input type="number" id="d-initial" data-unit="만원" value="30000" step="1000" min="100">
+            <span class="input-currency" id="d-initial-display">3억원</span>
+          </div>
+          <div class="chips" data-target="d-initial">
+            <button class="chip" data-v="10000">1억</button>
+            <button class="chip" data-v="30000">3억</button>
+            <button class="chip" data-v="50000">5억</button>
+            <button class="chip" data-v="100000">10억</button>
+          </div>
+        </div>
+        <div class="input-group">
+          <label class="label" for="d-start">시작일</label>
+          <input type="date" id="d-start">
+          <div class="input-hint" id="d-start-hint"></div>
+        </div>
+        <div class="input-group">
+          <label class="label" for="d-end">종료일</label>
+          <input type="date" id="d-end">
+          <div class="input-hint">특정 구간만 잘라 볼 수 있습니다</div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top:6px;">
+        <div class="sub-card">
+          <div class="sub-card-title">계좌</div>
+          <div class="radio-row">
+            <label class="radio-opt on"><input type="radio" name="d-tax" value="general" checked><span><span class="ro-title">일반계좌</span><span class="ro-desc" style="display:block;">분배금 세금(과세표준액 × 15.4%)을 떼고, 국내상장 해외 ETF를 팔 때 차익 세금(추정)도 뗍니다</span></span></label>
+            <label class="radio-opt"><input type="radio" name="d-tax" value="shelter"><span><span class="ro-title">연금저축·IRP·ISA 같은 절세계좌</span><span class="ro-desc" style="display:block;">운용 중 세금 없이 계산합니다(과세이연). 꺼낼 때 내는 세금은 반영하지 않습니다</span></span></label>
+          </div>
+        </div>
+        <div class="sub-card">
+          <div class="sub-card-title">본주는 생활비를 어떻게 꺼낼까요?</div>
+          <div class="radio-row">
+            <label class="radio-opt on"><input type="radio" name="d-mode" value="match" checked><span><span class="ro-title">커버드콜과 같은 금액</span><span class="ro-desc" style="display:block;">커버드콜이 분배금을 받은 날, 같은 금액을 본주에서 꺼냅니다 → 남은 자산만 비교하면 됩니다</span></span></label>
+            <label class="radio-opt"><input type="radio" name="d-mode" value="rate"><span><span class="ro-title">매년 정해진 비율(정률)</span><span class="ro-desc" style="display:block;">매년 첫 거래일 평가금액 × 인출률을 1년 생활비로 정하고, 매달 첫 거래일에 1/12씩 꺼냅니다</span>
+              <span class="inline-input" id="d-rate-wrap"><input type="number" id="d-rate" value="4" step="0.5" min="0.5" max="30"><span>% / 년</span></span></span></label>
+          </div>
+          <div class="input-hint" style="margin-top:10px;">본주의 분배금(세후)은 먼저 생활비로 쓰고, 모자란 만큼만 팝니다.</div>
+          <div id="d-left-wrap" class="is-hidden" style="margin-top:10px;">
+            <div class="label" style="margin-bottom:6px;">본주 분배금이 그달 생활비보다 많으면</div>
+            <div class="chips" id="d-left">
+              <button class="chip on" data-v="reinvest">남은 돈은 다시 재투자</button>
+              <button class="chip" data-v="spend">남은 돈도 생활비로</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="d-result">
+      <div class="verdict">
+        <div class="verdict-label" id="d-verdict-label">RESULT</div>
+        <div class="verdict-main" id="d-verdict-main">-</div>
+        <div class="verdict-sub" id="d-verdict-sub"></div>
+      </div>
+      <div class="vs-row" id="d-vs"></div>
+
+      <div class="card">
+        <div class="chart-head">
+          <div>
+            <h3 class="chart-title" id="d-c1-title">남은 자산 비교</h3>
+            <p class="chart-subtitle" id="d-c1-sub">생활비를 꺼내고 난 뒤 각자 계좌에 남은 평가금액입니다.</p>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <div class="seg" id="d-c1-view"><button data-v="remain" class="on">남은 자산</button><button data-v="total">남은 자산 + 쓴 생활비</button></div>
+            <div class="seg" id="d-c1-scale"><button data-v="linear" class="on">일반</button><button data-v="log">로그</button></div>
+          </div>
+        </div>
+        <div class="chart-container"><canvas id="d-chart1"></canvas></div>
+      </div>
+
+      <div class="card">
+        <h3 class="chart-title">매달 손에 쥔 생활비</h3>
+        <p class="chart-subtitle" id="d-c2-sub">커버드콜 분배금(세후)이 달마다 얼마였는지 보여 줍니다. 분배금은 매달 같지 않습니다.</p>
+        <div class="chart-container sm"><canvas id="d-chart2"></canvas></div>
+      </div>
+
+      <div class="card">
+        <h3 class="chart-title">연도별 기록</h3>
+        <p class="chart-subtitle">연도 마지막 거래일 기준입니다. 첫해와 마지막 해는 일부 기간입니다.</p>
+        <div class="table-wrap">
+          <table class="data-table" id="d-table">
+            <thead><tr><th>연도</th><th>커버드콜 생활비</th><th>커버드콜 연말 자산</th><th>본주 생활비</th><th>본주 연말 자산</th><th>자산 차이 (본주 − 커버드콜)</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="insight-box">
+        <div class="insight-label">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D9542B" stroke-width="2"><path d="M12 3l1.9 5.8L20 10l-4.5 3.3L17 20l-5-3.5L7 20l1.5-6.7L4 10l6.1-1.2L12 3z"/></svg>
+          <span class="insight-label-text">KEY INSIGHT</span>
+        </div>
+        <h3 class="insight-title" id="d-insight-title">-</h3>
+        <p class="insight-desc" id="d-insight-desc">-</p>
+        <div class="insight-cta">
+          <div class="insight-cta-text">📺 커버드콜 세대별 차이와 노후 인출 전략은 똑재TV에서 자세히 다룹니다.</div>
+          <a href="https://www.youtube.com/@ttok_jae" target="_blank" rel="noopener" class="cta-link primary">똑재TV 구독하기</a>
+          <a href="https://cafe.naver.com/ttokjae" target="_blank" rel="noopener" class="cta-link secondary"><span class="naver-mark">N</span> 평생 ETF 투자 카페</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 02 분배금 재투자 백테스트 ================= -->
+  <section class="panel" id="panel-bt">
+    <div class="card">
+      <div class="step-label"><div class="step-line"></div><span class="step-text">STEP 01 / 종목과 분배금 처리</span></div>
+      <h2 class="card-title">분배금을 어디에 넣을까요?</h2>
+      <p class="card-subtitle">분배락일마다 받은 분배금(세후)을 그날 종가에 고른 곳에 넣습니다. 비교 대상에는 같은 날 같은 돈을 넣고, 그 분배금은 자기에게 재투자합니다.</p>
+      <div class="grid-2">
+        <div class="input-group">
+          <label class="label" for="b-cc">커버드콜 ETF</label>
+          <select id="b-cc"></select>
+        </div>
+        <div class="input-group">
+          <label class="label" for="b-cmp">비교 대상 — 같은 돈을 여기에 그대로 넣었다면?</label>
+          <select id="b-cmp"></select>
+        </div>
+      </div>
+      <div class="sub-card" style="margin-top:4px;">
+        <div class="sub-card-title">분배금(세후) 처리</div>
+        <div class="radio-row h">
+          <label class="radio-opt on"><input type="radio" name="b-policy" value="reinvest" checked><span><span class="ro-title">같은 ETF에 재투자</span><span class="ro-desc" style="display:block;">받은 분배금으로 그 커버드콜을 더 삽니다</span></span></label>
+          <label class="radio-opt"><input type="radio" name="b-policy" value="other"><span><span class="ro-title">다른 ETF 사기</span><span class="ro-desc" style="display:block;">분배금으로 본주 같은 성장형 ETF를 사 모읍니다</span></span></label>
+          <label class="radio-opt"><input type="radio" name="b-policy" value="cash"><span><span class="ro-title">현금으로 모아 두기</span><span class="ro-desc" style="display:block;">재투자하지 않고 쌓아 둡니다(이자 없음)</span></span></label>
+          <label class="radio-opt"><input type="radio" name="b-policy" value="spend"><span><span class="ro-title">생활비로 쓰기</span><span class="ro-desc" style="display:block;">받는 대로 꺼내 씁니다</span></span></label>
+        </div>
+        <div class="input-group is-hidden" id="b-target-wrap" style="margin-top:14px;">
+          <label class="label" for="b-target">분배금으로 살 ETF</label>
+          <select id="b-target"></select>
+        </div>
+      </div>
+      <div class="pair-hint" id="b-pair-hint"></div>
+    </div>
+
+    <div class="card">
+      <div class="step-label"><div class="step-line"></div><span class="step-text">STEP 02 / 조건</span></div>
+      <h2 class="card-title">투자금과 기간</h2>
+      <p class="card-subtitle">금액은 <strong>만원 단위</strong>입니다. 월 적립액은 매달 첫 거래일 종가에 삽니다.</p>
+      <div class="grid-4">
+        <div class="input-group">
+          <label class="label" for="b-initial">초기 투자금</label>
+          <div class="input-wrap">
+            <input type="number" id="b-initial" data-unit="만원" value="5000" step="100" min="0">
+            <span class="input-currency" id="b-initial-display">5,000만원</span>
+          </div>
+          <div class="chips" data-target="b-initial">
+            <button class="chip" data-v="1000">1천</button>
+            <button class="chip" data-v="5000">5천</button>
+            <button class="chip" data-v="10000">1억</button>
+          </div>
+        </div>
+        <div class="input-group">
+          <label class="label" for="b-monthly">월 적립액</label>
+          <div class="input-wrap">
+            <input type="number" id="b-monthly" data-unit="만원" value="0" step="10" min="0">
+            <span class="input-currency" id="b-monthly-display">없음</span>
+          </div>
+          <div class="chips" data-target="b-monthly">
+            <button class="chip" data-v="0">없음</button>
+            <button class="chip" data-v="50">50만</button>
+            <button class="chip" data-v="100">100만</button>
+          </div>
+        </div>
+        <div class="input-group">
+          <label class="label" for="b-start">시작일</label>
+          <input type="date" id="b-start">
+          <div class="input-hint" id="b-start-hint"></div>
+        </div>
+        <div class="input-group">
+          <label class="label" for="b-end">종료일</label>
+          <input type="date" id="b-end">
+        </div>
+      </div>
+      <div class="sub-card" style="margin-top:6px;">
+        <div class="sub-card-title">계좌</div>
+        <div class="radio-row h">
+          <label class="radio-opt on"><input type="radio" name="b-tax" value="general" checked><span><span class="ro-title">일반계좌</span><span class="ro-desc" style="display:block;">분배금 세금 = 과세표준액 × 15.4%</span></span></label>
+          <label class="radio-opt"><input type="radio" name="b-tax" value="shelter"><span><span class="ro-title">절세계좌(세금 없이)</span><span class="ro-desc" style="display:block;">연금저축·IRP·ISA처럼 운용 중 세금을 떼지 않는 경우</span></span></label>
+        </div>
+      </div>
+    </div>
+
+    <div id="b-result">
+      <div class="verdict">
+        <div class="verdict-label">RESULT</div>
+        <div class="verdict-main" id="b-verdict-main">-</div>
+        <div class="verdict-sub" id="b-verdict-sub"></div>
+      </div>
+      <div class="stat-grid" id="b-stats"></div>
+      <div class="card">
+        <div class="chart-head">
+          <div>
+            <h3 class="chart-title">자산 성장 곡선</h3>
+            <p class="chart-subtitle" id="b-c-sub">내 전략(커버드콜 + 분배금 처리) vs 같은 돈을 비교 대상에 그대로 넣고 분배금까지 재투자했을 때</p>
+          </div>
+          <div class="seg" id="b-scale"><button data-v="linear" class="on">일반</button><button data-v="log">로그</button></div>
+        </div>
+        <div class="chart-container"><canvas id="b-chart"></canvas></div>
+      </div>
+      <div class="card">
+        <h3 class="chart-title">연도별 기록</h3>
+        <p class="chart-subtitle">연도 마지막 거래일 기준입니다.</p>
+        <div class="table-wrap">
+          <table class="data-table" id="b-table">
+            <thead><tr><th>연도</th><th>넣은 돈 누계</th><th>내 전략 연말 자산</th><th>비교 대상 연말 자산</th><th>그해 받은 분배금(세후)</th><th>그해 낸 세금</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="insight-box">
+        <div class="insight-label">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D9542B" stroke-width="2"><path d="M12 3l1.9 5.8L20 10l-4.5 3.3L17 20l-5-3.5L7 20l1.5-6.7L4 10l6.1-1.2L12 3z"/></svg>
+          <span class="insight-label-text">KEY INSIGHT</span>
+        </div>
+        <h3 class="insight-title" id="b-insight-title">-</h3>
+        <p class="insight-desc" id="b-insight-desc">-</p>
+        <div class="insight-cta">
+          <div class="insight-cta-text">📺 분배금 재투자 전략과 계좌 선택은 똑재TV에서 자세히 다룹니다.</div>
+          <a href="https://www.youtube.com/@ttok_jae" target="_blank" rel="noopener" class="cta-link primary">똑재TV 구독하기</a>
+          <a href="https://cafe.naver.com/ttokjae" target="_blank" rel="noopener" class="cta-link secondary"><span class="naver-mark">N</span> 평생 ETF 투자 카페</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 03 현황판 ================= -->
+  <section class="panel" id="panel-board">
+    <div class="card">
+      <div class="step-label"><div class="step-line"></div><span class="step-text">현황판 / 국내상장 커버드콜 전체</span></div>
+      <h2 class="card-title">얼마나 올랐고, 얼마나 주고, 얼마나 과세되나</h2>
+      <p class="card-subtitle"><strong>가격 수익률</strong>은 분배금을 빼고 주가만 본 수익률, <strong>총수익</strong>은 분배금을 전부(세전) 같은 ETF에 재투자했다고 본 수익률입니다. 둘의 차이가 클수록 수익을 분배금으로 많이 꺼내 준 상품이고, 가격 수익률이 마이너스면 원금(주가)이 줄어든 상태입니다. 행을 누르면 그 종목으로 생활비 대결을 엽니다.</p>
+      <div class="board-tools">
+        <span><span class="lbl">기간</span>
+          <span class="seg" id="bd-period"><button data-v="1" class="on">1년</button><button data-v="3">3년</button><button data-v="all">계산 가능한 전체</button></span></span>
+      </div>
+      <div class="board-tools" style="margin-top:10px;"><span class="lbl">기초자산</span><div class="chips" id="bd-group" style="margin-top:0;"></div></div>
+      <div class="board-tools" style="margin-top:6px;"><span class="lbl">세대</span><div class="chips" id="bd-gen" style="margin-top:0;"></div></div>
+      <div class="table-wrap">
+        <table class="data-table board-table" id="bd-table">
+          <thead><tr>
+            <th data-k="name">종목</th>
+            <th data-k="y12">12개월 분배율</th>
+            <th data-k="taxr">과세 비율</th>
+            <th data-k="price">가격 수익률</th>
+            <th data-k="total" class="sorted">총수익(세전 재투자)</th>
+            <th data-k="base">본주 총수익</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="input-hint" style="margin-top:12px;line-height:1.7;" id="bd-note"></p>
+    </div>
+
+    <div class="method-box">
+      <h3>세대 구분 기준</h3>
+      <ul>
+        <li>세대는 옵션을 파는 설계 방식 기준입니다. 공식 용어가 아니고, 세대가 높다고 수익률이나 분배율이 더 좋은 것도 아닙니다.</li>
+        <li>기초자산을 넓힌 것(채권·금·단일종목)과 분배 주기는 세대로 치지 않습니다. 운용 방식을 확인하는 중인 종목은 "분류 보류"로 둡니다.</li>
+      </ul>
+      <div class="gen-guide">
+        <div><b>1세대 · 배당 올인형</b>등가격(ATM) 콜을 100% 매도. 분배율이 가장 높고, 오를 때 거의 못 따라갑니다.</div>
+        <div><b>2세대 · 밸런스형</b>외가격(OTM)에 팔거나 매니저가 비중을 조절합니다.</div>
+        <div><b>2.5세대 · 부분 커버드콜</b>기초자산의 30~60%에만 옵션을 팝니다.</div>
+        <div><b>3세대 · 성장 극대화형</b>매도 비중 10~30% 고정 또는 위클리·데일리 초단기 옵션. 위클리·데일리면 타겟형이라도 3세대입니다.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="method-box" id="method">
+    <h3>계산 방법</h3>
+    <ul>
+      <li>종가는 다음금융 일별 시세(분배금을 반영하지 않은 원래 종가), 분배금·과세표준액은 ETF CHECK·FunETF 공시 자료를 씁니다. 네이버 수정주가와 대조해 빠진 분배금이 없는지 확인한 구간만 계산합니다.</li>
+      <li>분배락일 전날까지 가진 수량 × 주당 분배금을 받고, 재투자는 분배락일 종가에 합니다(실제 지급은 며칠 뒤). 소수 주까지 산다고 가정합니다.</li>
+      <li>일반계좌 분배금 세금은 운용사가 공시한 과세표준액 × 15.4%입니다. 커버드콜 분배금 중 과세되지 않는 부분(국내주식 옵션 매매차익 등)이 있으면 그만큼 세금이 줄어듭니다.</li>
+      <li>국내상장 해외 ETF 등(국내주식형 제외)을 팔 때는 (매도가 − 평균 단가) × 15.4%를 뗍니다. 실제로는 과세표준기준가로 계산하므로 차이가 날 수 있는 추정치입니다.</li>
+      <li>마지막 평가금액은 팔기 전 금액입니다. 매매 수수료, 금융소득종합과세(연 2,000만원 초과), 건강보험료(건보료), 연금계좌 인출 때 세금은 반영하지 않았습니다. 총보수는 ETF 가격에 이미 녹아 있습니다.</li>
+      <li>연환산 수익률은 넣은 돈·꺼낸 돈의 날짜를 모두 반영한 현금흐름 기준(XIRR)입니다.</li>
+    </ul>
+  </div>
+
+  <footer>
+    ※ 과거 실제 데이터로 계산한 결과이며, 미래 수익을 보장하지 않습니다. 상장 기간이 짧은 종목은 결과의 의미가 제한적입니다.<br>
+    분배금 세금(과세표준액 × 15.4%)과 국내상장 해외 ETF 매도차익 세금(추정)을 반영했고, 매매 수수료·금융소득종합과세·건보료는 반영하지 않았습니다. 특정 상품의 매수·매도 권유가 아닙니다.<br>
+    🔒 입력한 숫자는 이 브라우저 안에서만 계산되며, 서버로 보내거나 따로 저장하지 않습니다.<br>
+    <span id="foot-date"></span>
+  </footer>
+</div>
+
+<script>
+// ==ENGINE START==
+/* 커버드콜 계산기 엔진
+ * 데이터: cc-data.json (dates: 거래일 YYYYMMDD, etfs[code] = {s, px[], dv:[[i, 분배금, 과표, est?]], dom, ...})
+ * 규칙
+ *  - 매수·재투자는 그날 종가, 소수 주 허용
+ *  - 분배락일 직전 보유 수량 × 주당 분배금을 받는다 (그날 종가에 산 수량은 제외)
+ *  - 일반계좌: 분배금 세금 = 수량 × 과세표준액 × 15.4%
+ *              국내상장 해외 ETF 등(국내주식형 제외)을 팔면 (매도가 − 평균 단가) × 15.4% (추정)
+ *  - 절세계좌: 세금 없음(과세이연)
+ */
+const TAX = 0.154;
+
+function makeData(raw) {
+  const D = { dates: raw.dates, etfs: raw.etfs, divAt: {} };
+  for (const code in raw.etfs) {
+    const m = new Map();
+    for (const r of raw.etfs[code].dv) m.set(r[0], r);
+    D.divAt[code] = m;
+  }
+  return D;
+}
+
+function priceAt(D, code, i) {
+  const e = D.etfs[code];
+  if (!e || i < e.s) return null;
+  return e.px[i - e.s];
+}
+
+function isMonthStart(D, i, i0) {
+  return i > i0 && D.dates[i].slice(0, 6) !== D.dates[i - 1].slice(0, 6);
+}
+function isYearStart(D, i, i0) {
+  return i > i0 && D.dates[i].slice(0, 4) !== D.dates[i - 1].slice(0, 4);
+}
+
+/* 한 사람의 계좌 */
+function Account(D, opt) {
+  this.D = D;
+  this.general = opt.taxMode !== 'shelter';
+  this.sh = {};      // code -> 수량
+  this.cost = {};    // code -> 매입원가 합
+  this.cash = 0;     // 아직 쓰거나 재투자하지 않은 현금
+  this.spent = 0;    // 생활비로 쓴 돈 누계
+  this.tax = 0;      // 낸 세금 누계
+  this.invested = 0; // 넣은 돈 누계
+  this.divGross = 0; // 받은 분배금(세전) 누계
+  this.divNet = 0;   // 받은 분배금(세후) 누계
+  this.flows = [];   // XIRR용 [i, 금액(+면 내 손에 들어온 돈)]
+  this.depletedAt = null;
+}
+Account.prototype.buy = function (code, amt, i) {
+  if (amt <= 0) return;
+  const p = priceAt(this.D, code, i);
+  if (!p) { this.cash += amt; return; }
+  this.sh[code] = (this.sh[code] || 0) + amt / p;
+  this.cost[code] = (this.cost[code] || 0) + amt;
+};
+Account.prototype.value = function (i) {
+  let v = this.cash;
+  for (const c in this.sh) {
+    const p = priceAt(this.D, c, i);
+    if (p) v += this.sh[c] * p;
+  }
+  return v;
+};
+/* code를 팔아 세후 net 원을 마련. 실제로 마련한 세후 금액을 돌려준다 */
+Account.prototype.sellNet = function (code, net, i) {
+  const q = this.sh[code] || 0;
+  const p = priceAt(this.D, code, i);
+  if (!q || !p || net <= 0) return 0;
+  const avg = this.cost[code] / q;
+  const taxable = this.general && !this.D.etfs[code].dom;
+  const gainRate = taxable ? Math.max(0, (p - avg) / p) : 0; // 매도금액 중 차익 비율
+  const keep = 1 - TAX * gainRate;                              // 매도금액 1원당 손에 남는 돈
+  let gross = net / keep;
+  if (gross > q * p) gross = q * p;
+  const sellQ = gross / p;
+  const t = gross * TAX * gainRate;
+  this.cost[code] -= avg * sellQ;
+  this.sh[code] = q - sellQ;
+  if (this.sh[code] < 1e-9) { this.sh[code] = 0; this.cost[code] = 0; }
+  this.tax += t;
+  return gross - t;
+};
+/* i일 분배락: 보유 종목마다 분배금 수령. 반환 {code: 세후금액} */
+Account.prototype.collect = function (i) {
+  const got = {};
+  for (const c in this.sh) {
+    const q = this.sh[c];
+    if (!q) continue;
+    const r = this.D.divAt[c] && this.D.divAt[c].get(i);
+    if (!r) continue;
+    const gross = q * r[1];
+    const t = this.general ? q * r[2] * TAX : 0;
+    this.tax += t;
+    this.divGross += gross;
+    this.divNet += gross - t;
+    got[c] = gross - t;
+  }
+  return got;
+};
+Account.prototype.contribute = function (code, amt, i) {
+  if (amt <= 0) return;
+  this.invested += amt;
+  this.flows.push([i, -amt]);
+  this.buy(code, amt, i);
+};
+Account.prototype.spend = function (amt, i) {
+  if (amt <= 0) return;
+  this.spent += amt;
+  this.flows.push([i, amt]);
+};
+
+/* ---------------------------------------------------------------
+ * 백테스트: 커버드콜 1종 + 분배금 처리
+ *  opt = { cc, policy: 'reinvest'|'other'|'cash'|'spend', target, cmp,
+ *          i0, i1, initial, monthly, taxMode }
+ *  cmp(비교 대상)는 같은 날 같은 돈을 넣고 자기 분배금은 자기에게 재투자
+ * ------------------------------------------------------------- */
+function runBacktest(D, opt) {
+  const A = new Account(D, opt);
+  const B = opt.cmp ? new Account(D, opt) : null;
+  const sA = [], sB = [], sInv = [], sSpentA = [];
+  for (let i = opt.i0; i <= opt.i1; i++) {
+    // 1) 분배락 (어제까지 보유분)
+    const gA = A.collect(i);
+    for (const c in gA) {
+      const net = gA[c];
+      if (c === opt.cc) {
+        if (opt.policy === 'reinvest') A.buy(opt.cc, net, i);
+        else if (opt.policy === 'other' && opt.target) A.buy(opt.target, net, i);
+        else if (opt.policy === 'spend') A.spend(net, i);
+        else A.cash += net;
+      } else {
+        A.buy(c, net, i); // 분배금으로 산 다른 ETF의 분배금은 그 ETF에 재투자
+      }
+    }
+    if (B) {
+      const gB = B.collect(i);
+      for (const c in gB) B.buy(c, gB[c], i);
+    }
+    // 2) 넣는 돈
+    let add = 0;
+    if (i === opt.i0) add += opt.initial;
+    if (isMonthStart(D, i, opt.i0)) add += opt.monthly;
+    if (add > 0) {
+      A.contribute(opt.cc, add, i);
+      if (B) B.contribute(opt.cmp, add, i);
+    }
+    sA.push(A.value(i));
+    if (B) sB.push(B.value(i));
+    sInv.push(A.invested);
+    sSpentA.push(A.spent);
+    if (opt._snap) opt._snap(i, A);
+  }
+  return { A, B, sA, sB, sInv, sSpentA };
+}
+
+/* ---------------------------------------------------------------
+ * 생활비 대결: 커버드콜은 분배금(세후)을 전부 생활비로, 본주는 팔아서 생활비
+ *  opt = { cc, base, i0, i1, initial, taxMode,
+ *          mode: 'match' (커버드콜과 같은 날 같은 금액) | 'rate' (매년 rate% 정률, 매달 1/12) ,
+ *          rate, leftover: 'reinvest'|'spend' }
+ *  본주는 자기 분배금(세후)을 먼저 쓰고 모자란 만큼만 판다
+ * ------------------------------------------------------------- */
+function runDuel(D, opt) {
+  const A = new Account(D, opt);
+  const B = new Account(D, opt);
+  const sA = [], sB = [], cA = [], cB = [];
+  const mA = new Map(), mB = new Map(); // YYYYMM -> 그달 생활비
+  let budgetB = 0;
+  const addM = (m, i, v) => { const k = D.dates[i].slice(0, 6); m.set(k, (m.get(k) || 0) + v); };
+
+  const payB = (need, i) => {
+    let paid = 0;
+    const fromCash = Math.min(B.cash, need);
+    B.cash -= fromCash; paid += fromCash;
+    if (paid < need - 1e-6) {
+      paid += B.sellNet(opt.base, need - paid, i);
+    }
+    if (paid < need - 0.5 && B.depletedAt === null) B.depletedAt = i;
+    B.spend(paid, i); addM(mB, i, paid);
+    return paid;
+  };
+
+  for (let i = opt.i0; i <= opt.i1; i++) {
+    // 분배락
+    const gA = A.collect(i);
+    let spendA = 0;
+    for (const c in gA) { spendA += gA[c]; }
+    if (spendA > 0) { A.spend(spendA, i); addM(mA, i, spendA); }
+    const gB = B.collect(i);
+    for (const c in gB) B.cash += gB[c];
+
+    if (i === opt.i0) {
+      A.contribute(opt.cc, opt.initial, i);
+      B.contribute(opt.base, opt.initial, i);
+      budgetB = opt.initial * (opt.rate || 0) / 100;
+    }
+
+    if (opt.mode === 'match') {
+      if (spendA > 0) payB(spendA, i);
+    } else {
+      if (isYearStart(D, i, opt.i0)) budgetB = B.value(i) * opt.rate / 100;
+      if (isMonthStart(D, i, opt.i0)) payB(budgetB / 12, i);
+    }
+    // 인출하고 남은 본주 분배금
+    if (B.cash > 0 && (opt.mode === 'match' ? spendA > 0 : isMonthStart(D, i, opt.i0))) {
+      if (opt.leftover === 'spend') { const v = B.cash; B.cash = 0; B.spend(v, i); addM(mB, i, v); }
+      else { const v = B.cash; B.cash = 0; B.buy(opt.base, v, i); }
+    }
+    sA.push(A.value(i)); sB.push(B.value(i));
+    cA.push(A.spent); cB.push(B.spent);
+  }
+  return { A, B, sA, sB, cA, cB, mA, mB };
+}
+
+/* 현황판용: 세전 재투자 총수익률·가격 수익률 */
+function totalReturn(D, code, i0, i1) {
+  const p0 = priceAt(D, code, i0), p1 = priceAt(D, code, i1);
+  if (!p0 || !p1) return null;
+  let sh = 1;
+  const m = D.divAt[code];
+  for (const [i, r] of m) {
+    if (i > i0 && i <= i1) {
+      const p = priceAt(D, code, i);
+      if (p) sh += sh * r[1] / p;
+    }
+  }
+  return { price: p1 / p0 - 1, total: sh * p1 / p0 - 1 };
+}
+
+/* 최근 12개월 분배 합·과표 합 (기준: i1 날짜로부터 365일 이내 분배락) */
+function trailing12(D, code, i1) {
+  const end = ymdToDate(D.dates[i1]);
+  const from = new Date(end.getTime() - 365 * 86400000);
+  let d = 0, t = 0, n = 0;
+  for (const [i, r] of D.divAt[code]) {
+    if (i > i1) continue;
+    const dt = ymdToDate(D.dates[i]);
+    if (dt > from) { d += r[1]; t += r[2]; n++; }
+  }
+  return { d, t, n };
+}
+
+function ymdToDate(s) { return new Date(Date.UTC(+s.slice(0, 4), +s.slice(4, 6) - 1, +s.slice(6, 8))); }
+
+/* XIRR: flows [[i, amt]], 마지막 평가금액을 i1에 + */
+function xirr(D, flows) {
+  if (!flows.length) return null;
+  const t0 = ymdToDate(D.dates[flows[0][0]]).getTime();
+  const pts = flows.map(([i, a]) => [(ymdToDate(D.dates[i]).getTime() - t0) / (365 * 86400000), a]);
+  const span = pts[pts.length - 1][0];
+  if (span < 0.08) return null;
+  const npv = r => pts.reduce((s, [t, a]) => s + a / Math.pow(1 + r, t), 0);
+  let lo = -0.99, hi = 10, flo = npv(lo), fhi = npv(hi);
+  if (flo * fhi > 0) return null;
+  for (let k = 0; k < 200; k++) {
+    const mid = (lo + hi) / 2, f = npv(mid);
+    if (Math.abs(f) < 1e-7) return mid;
+    if (f * flo > 0) { lo = mid; flo = f; } else { hi = mid; }
+  }
+  return (lo + hi) / 2;
+}
+
+function mdd(series) {
+  let peak = -Infinity, worst = 0;
+  for (const v of series) {
+    if (v > peak) peak = v;
+    if (peak > 0) worst = Math.min(worst, v / peak - 1);
+  }
+  return worst;
+}
+
+if (typeof module !== 'undefined') {
+  module.exports = { makeData, priceAt, runBacktest, runDuel, totalReturn, trailing12, xirr, mdd, Account };
+}
+// ==ENGINE END==
+
+</script>
+<script>
+'use strict';
+/* ============================================================
+ * 커버드콜 계산기 화면
+ * ============================================================ */
+const DATA_URL = 'data/cc-data.json';
+
+// 기초자산 묶음 (트래커 분류 → 화면 이름)
+const GROUPS = [
+  ['코스피커', '코스피200'], ['국배커', '국내 배당'], ['국테크커', '국내 반도체'], ['코스닥커', '코스닥150'],
+  ['나스닥커', '나스닥100'], ['S&P500커', 'S&P500'], ['미배커', '미국 배당'], ['테크커', '미국 테크'],
+  ['미채커', '미국 국채'], ['커채혼합', '채권혼합'], ['기타', '금·중국'],
+];
+const GROUP_NAME = Object.fromEntries(GROUPS);
+
+// 비교 본주 기본값: 묶음별 → 종목별 예외
+const BASE_BY_GROUP = {
+  '코스피커': '069500', '국배커': '069500', '국테크커': '091160', '코스닥커': '229200',
+  '나스닥커': '133690', 'S&P500커': '360750', '미배커': '458730', '테크커': '133690',
+};
+const BASE_BY_CODE = { '489030': '161510', '0018C0': '161510', '0094M0': '495850', '474220': '381170' };
+
+// 세대 (2026-10 확정 기준). 없으면 분류 보류
+const GEN = {};
+[['1', '289480 290080 441680'],
+ ['2', '166400 472150 0219E0'],
+ ['2.5', '441640 0144L0 458750 458760'],
+ ['3', '475720 498400 0167B0 0104N0 0210E0 480020 480030 480040 482730 486290 490590 490600 491620 493810 494210 494300 494420 0005A0 0008S0 0138T0 483280 489030 0018C0 498410 0094M0 0104P0 0094L0 0128D0 0176P0 0190G0 0198A0 0223A0 476550 481060 0132K0 0203D0 0040X0'],
+].forEach(([g, list]) => list.split(' ').forEach(c => { GEN[c] = g; }));
+const GEN_LABEL = { '1': '1세대', '2': '2세대', '2.5': '2.5세대', '3': '3세대' };
+const GEN_CLS = { '1': 'g1', '2': 'g2', '2.5': 'g25', '3': 'g3' };
+
+let D = null;           // 엔진 데이터
+let CC = [], BASES = []; // 코드 목록
+const charts = {};
+
+// ---------------- 포맷 ----------------
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function won(n) {               // 1억 4,748만원
+  const neg = n < 0; n = Math.abs(n);
+  const man = Math.round(n / 10000);
+  const eok = Math.floor(man / 10000), rest = man % 10000;
+  let s;
+  if (man === 0) s = Math.round(n).toLocaleString() + '원';
+  else if (eok && rest) s = eok.toLocaleString() + '억 ' + rest.toLocaleString() + '만원';
+  else if (eok) s = eok.toLocaleString() + '억원';
+  else s = rest.toLocaleString() + '만원';
+  return (neg ? '−' : '') + s;
+}
+function wonShort(n) {          // 차트 축: 1.5억 / 3,000만
+  const a = Math.abs(n), neg = n < 0 ? '-' : '';
+  if (a >= 1e8) return neg + (a / 1e8).toFixed(a >= 1e10 ? 0 : 1) + '억';
+  if (a >= 1e4) return neg + Math.round(a / 1e4).toLocaleString() + '만';
+  return neg + Math.round(a).toLocaleString();
+}
+function manText(m) {           // 만원 입력 → 표시
+  m = Math.round(+m || 0);
+  if (m <= 0) return '없음';
+  return won(m * 10000);
+}
+const pctS = (v, d = 1) => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v * 100).toFixed(d) + '%';
+const pct2 = v => (v * 100).toFixed(2) + '%';
+const ymd = s => `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
+const ymdDot = s => `${s.slice(2, 4)}.${s.slice(4, 6)}`;
+const nm = c => D.etfs[c] ? D.etfs[c].n : c;
+const signCls = v => v > 0 ? 'up' : v < 0 ? 'down' : '';
+
+function idxFromInput(v, fallback) {
+  if (!v) return fallback;
+  const s = v.replace(/-/g, '');
+  const ds = D.dates;
+  let lo = 0, hi = ds.length - 1;
+  if (s <= ds[0]) return 0;
+  if (s >= ds[hi]) return hi;
+  while (lo < hi) { const mid = (lo + hi) >> 1; if (ds[mid] < s) lo = mid + 1; else hi = mid; }
+  return lo;
+}
+const startOf = codes => Math.max(...codes.filter(Boolean).map(c => D.etfs[c].s));
+
+function baseFor(cc) {
+  const e = D.etfs[cc];
+  const b = BASE_BY_CODE[cc] || BASE_BY_GROUP[e.grp];
+  return b && D.etfs[b] ? b : '069500';
+}
+
+// ---------------- 셀렉트 ----------------
+function ccOptions(withBases) {
+  let h = '';
+  if (withBases) {
+    h += '<optgroup label="본주(일반 ETF)">' + BASES.map(c => `<option value="${c}">${esc(nm(c))}</option>`).join('') + '</optgroup>';
+  }
+  for (const [g, label] of GROUPS) {
+    const list = CC.filter(c => D.etfs[c].grp === g);
+    if (!list.length) continue;
+    h += `<optgroup label="커버드콜 · ${esc(label)}">` + list.map(c => `<option value="${c}">${esc(nm(c))}</option>`).join('') + '</optgroup>';
+  }
+  return h;
+}
+function baseOptions() {
+  return '<optgroup label="본주(일반 ETF)">' + BASES.map(c => `<option value="${c}">${esc(nm(c))}</option>`).join('') + '</optgroup>'
+    + ccOptions(false);
+}
+
+// ---------------- 공통 입력 ----------------
+const $ = id => document.getElementById(id);
+const radio = name => (document.querySelector(`input[name="${name}"]:checked`) || {}).value;
+function syncRadios() {
+  document.querySelectorAll('.radio-opt').forEach(l => {
+    const inp = l.querySelector('input'); l.classList.toggle('on', !!(inp && inp.checked));
+  });
+}
+const unitCanvas = document.createElement('canvas').getContext('2d');
+function placeUnits() {
+  document.querySelectorAll('.input-wrap input[data-unit]').forEach(inp => {
+    let tag = inp.parentNode.querySelector('.input-unit');
+    if (!tag) { tag = document.createElement('span'); tag.className = 'input-unit'; tag.textContent = inp.dataset.unit; inp.after(tag); }
+    const cs = getComputedStyle(inp);
+    if (inp.value === '' || !inp.offsetWidth) { tag.style.visibility = 'hidden'; return; }
+    unitCanvas.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    const w = unitCanvas.measureText(inp.value).width;
+    const left = parseFloat(cs.paddingLeft) + parseFloat(cs.borderLeftWidth) + w + 4 - inp.scrollLeft;
+    tag.style.left = Math.round(left) + 'px';
+    tag.style.fontSize = cs.fontSize;
+    tag.style.visibility = left + tag.offsetWidth < inp.clientWidth - parseFloat(cs.paddingRight) + 8 ? 'visible' : 'hidden';
+  });
+}
+function updateDisplays() {
+  $('d-initial-display').textContent = manText($('d-initial').value);
+  $('b-initial-display').textContent = manText($('b-initial').value);
+  const m = +$('b-monthly').value || 0;
+  $('b-monthly-display').textContent = m > 0 ? '월 ' + manText(m) : '없음';
+  document.querySelectorAll('.chips[data-target]').forEach(ch => {
+    const v = $(ch.dataset.target).value;
+    ch.querySelectorAll('.chip').forEach(b => b.classList.toggle('on', String(b.dataset.v) === String(v)));
+  });
+  placeUnits();
+}
+
+function setDateRange(prefix, codes, keep) {
+  const s = startOf(codes), last = D.dates.length - 1;
+  const st = $(prefix + '-start'), en = $(prefix + '-end');
+  st.min = en.min = ymd(D.dates[s]);
+  st.max = en.max = ymd(D.dates[last]);
+  let si = keep ? idxFromInput(st.value, s) : s;
+  if (si < s) si = s;
+  let ei = keep ? idxFromInput(en.value, last) : last;
+  if (ei > last) ei = last;
+  if (ei <= si) { si = s; ei = last; }
+  st.value = ymd(D.dates[si]); en.value = ymd(D.dates[ei]);
+  const late = codes.filter(Boolean).filter(c => D.etfs[c].s === s && s > 0).map(nm);
+  $(prefix + '-start-hint').textContent = s > 0
+    ? `${ymd(D.dates[s])}부터 계산할 수 있어요${late.length ? ` (${late[0]} 기준)` : ''}`
+    : `데이터 시작일 ${ymd(D.dates[0])}`;
+}
+function yearsBetween(i0, i1) {
+  return (ymdToDate(D.dates[i1]) - ymdToDate(D.dates[i0])) / (365.25 * 86400000);
+}
+const yrText = y => y >= 1 ? `${(Math.round(y * 10) / 10).toFixed(1)}년` : `${Math.max(1, Math.round(y * 12))}개월`;
+
+// ---------------- 차트 ----------------
+const chartBase = {
+  responsive: true, maintainAspectRatio: false, animation: false,
+  interaction: { mode: 'index', intersect: false },
+  plugins: {
+    legend: { labels: { font: { family: "Pretendard, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif", size: 13, weight: 600 }, color: '#1A1A1A', usePointStyle: true, padding: 16 } },
+    tooltip: {
+      backgroundColor: '#FBF7F0', titleColor: '#1A1A1A', bodyColor: '#3A2F26', borderColor: '#D9542B', borderWidth: 1.5,
+      padding: 12, titleFont: { family: "Pretendard, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif", size: 13, weight: 800 }, bodyFont: { family: "Pretendard, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif", size: 12.5, weight: 600 },
+      usePointStyle: true, boxPadding: 6, cornerRadius: 10,
+      callbacks: { label: c => ` ${c.dataset.label}: ${won(c.parsed.y)}` },
+    },
+  },
+};
+const endLabelPlugin = {
+  id: 'endLabel',
+  afterDatasetsDraw(chart) {
+    if (chart.config.type !== 'line') return;
+    const { ctx } = chart; ctx.save();
+    const labels = [];
+    chart.data.datasets.forEach((ds, i) => {
+      const meta = chart.getDatasetMeta(i);
+      if (meta.hidden || ds._noEnd) return;
+      const p = meta.data[ds.data.length - 1];
+      if (p) labels.push({ x: p.x, y: p.y, color: ds.borderColor, text: ds._short || ds.label, value: ds.data[ds.data.length - 1] });
+    });
+    labels.sort((a, b) => a.y - b.y);
+    for (let i = 1; i < labels.length; i++) if (labels[i].y - labels[i - 1].y < 18) labels[i].y = labels[i - 1].y + 18;
+    const mobile = window.innerWidth < 768, fs = mobile ? 10 : 11;
+    labels.forEach(l => {
+      ctx.font = `700 ${fs}px Pretendard, sans-serif`;
+      const text = `${l.text} ${wonShort(l.value)}`;
+      const tw = ctx.measureText(text).width, padX = mobile ? 5 : 7, bh = fs + 8, bw = tw + padX * 2;
+      const bx = Math.min(l.x - bw - 4, chart.chartArea.right - bw), by = l.y - bh / 2;
+      ctx.fillStyle = '#FBF7F0'; ctx.strokeStyle = l.color; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(bx, by, bw, bh, 4); else ctx.rect(bx, by, bw, bh);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = l.color; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+      ctx.fillText(text, bx + padX, l.y);
+    });
+    ctx.restore();
+  },
+};
+function drawLine(id, labels, datasets, log) {
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart($(id), {
+    type: 'line',
+    data: { labels, datasets: datasets.map(d => Object.assign({ pointRadius: 0, pointHoverRadius: 3, borderWidth: 2.2, tension: 0, fill: false }, d)) },
+    options: Object.assign({}, chartBase, {
+      scales: {
+        x: { grid: { display: false }, ticks: { maxTicksLimit: window.innerWidth < 768 ? 5 : 8, autoSkip: true, maxRotation: 0, font: { family: "Pretendard, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif", size: 11, weight: 600 }, color: '#8B8276', callback(v) { return ymdDot(this.getLabelForValue(v)); } } },
+        y: { type: log ? 'logarithmic' : 'linear', grid: { color: '#EDE5D6' }, ticks: { font: { family: "Pretendard, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif", size: 11, weight: 600 }, color: '#8B8276', callback: v => wonShort(v), maxTicksLimit: 7 } },
+      },
+      plugins: Object.assign({}, chartBase.plugins, { tooltip: Object.assign({}, chartBase.plugins.tooltip, { callbacks: { title: it => ymd(it[0].label), label: c => ` ${c.dataset.label}: ${won(c.parsed.y)}` } }) }),
+    }),
+    plugins: [endLabelPlugin],
+  });
+}
+function drawBars(id, labels, datasets) {
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart($(id), {
+    type: 'bar',
+    data: { labels, datasets: datasets.map(d => Object.assign({ borderRadius: 3, maxBarThickness: 18 }, d)) },
+    options: Object.assign({}, chartBase, {
+      scales: {
+        x: { grid: { display: false }, ticks: { maxTicksLimit: window.innerWidth < 768 ? 6 : 12, autoSkip: true, maxRotation: 0, font: { family: "Pretendard, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif", size: 11, weight: 600 }, color: '#8B8276', callback(v) { const l = this.getLabelForValue(v); return l.slice(2, 4) + '.' + l.slice(4, 6); } } },
+        y: { grid: { color: '#EDE5D6' }, ticks: { font: { family: "Pretendard, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif", size: 11, weight: 600 }, color: '#8B8276', callback: v => wonShort(v) } },
+      },
+      plugins: Object.assign({}, chartBase.plugins, { tooltip: Object.assign({}, chartBase.plugins.tooltip, { callbacks: { title: it => `${it[0].label.slice(0, 4)}년 ${+it[0].label.slice(4, 6)}월`, label: c => ` ${c.dataset.label}: ${won(c.parsed.y)}` } }) }),
+    }),
+  });
+}
+const segVal = id => ($(id).querySelector('button.on') || {}).dataset.v;
+
+function yearEnds(i0, i1) {     // [{y, i}] 각 연도의 마지막 거래일(구간 안)
+  const out = [];
+  for (let i = i0; i <= i1; i++) {
+    if (i === i1 || D.dates[i + 1].slice(0, 4) !== D.dates[i].slice(0, 4)) out.push({ y: D.dates[i].slice(0, 4), i });
+  }
+  return out;
+}
+
+// ============================================================
+// 01 생활비 대결
+// ============================================================
+let duelRes = null;
+function readDuel() {
+  const cc = $('d-cc').value, base = $('d-base').value;
+  const last = D.dates.length - 1, s = startOf([cc, base]);
+  let i0 = Math.max(s, idxFromInput($('d-start').value, s));
+  let i1 = Math.min(last, idxFromInput($('d-end').value, last));
+  if (i1 <= i0) { i0 = s; i1 = last; }
+  return {
+    cc, base, i0, i1,
+    initial: Math.max(0, +$('d-initial').value || 0) * 10000,
+    taxMode: radio('d-tax'),
+    mode: radio('d-mode'),
+    rate: Math.min(30, Math.max(0.5, +$('d-rate').value || 4)),
+    leftover: ($('d-left').querySelector('.chip.on') || {}).dataset.v || 'reinvest',
+  };
+}
+function runDuelUI() {
+  const o = readDuel();
+  $('d-rate-wrap').style.opacity = o.mode === 'rate' ? 1 : 0.45;
+  $('d-left-wrap').classList.toggle('is-hidden', o.mode !== 'rate');
+  if (o.cc === o.base) { $('d-verdict-main').textContent = '커버드콜과 본주를 서로 다른 종목으로 골라 주세요.'; return; }
+  if (o.initial <= 0) { $('d-verdict-main').textContent = '초기 투자금을 넣어 주세요.'; return; }
+  const r = runDuel(D, o);
+  duelRes = { o, r };
+  const vA = r.A.value(o.i1), vB = r.B.value(o.i1);
+  const yrs = yearsBetween(o.i0, o.i1);
+  const ccName = nm(o.cc), bName = nm(o.base);
+  const xA = xirr(D, [...r.A.flows, [o.i1, vA]]), xB = xirr(D, [...r.B.flows, [o.i1, vB]]);
+  const months = r.mA.size;
+
+  // 판정
+  $('d-verdict-label').textContent = `${ymd(D.dates[o.i0])} ~ ${ymd(D.dates[o.i1])} · ${yrText(yrs)} · ${o.taxMode === 'general' ? '일반계좌' : '절세계좌'}`;
+  if (o.mode === 'match') {
+    const diff = vB - vA;
+    $('d-verdict-main').innerHTML = `똑같이 <span class="hl">${won(r.A.spent)}</span>을 생활비로 쓴 뒤,<br>`
+      + (Math.abs(diff) < 1 ? '두 사람에게 남은 돈은 거의 같습니다.'
+        : `<span class="hl">${diff > 0 ? '본주' : '커버드콜'}</span> 쪽이 <span class="hl">${won(Math.abs(diff))}</span> 더 남았습니다.`);
+    $('d-verdict-sub').innerHTML = `커버드콜은 분배금(세후)만으로, 본주는 같은 날 같은 금액을 꺼내 썼습니다. 처음 넣은 돈은 둘 다 <strong>${won(o.initial)}</strong>입니다.`;
+  } else {
+    const tA = vA + r.A.spent, tB = vB + r.B.spent, diff = tB - tA;
+    $('d-verdict-main').innerHTML = `쓴 생활비 <span class="hl">${won(r.A.spent)}</span> vs <span class="hl">${won(r.B.spent)}</span><br>`
+      + `남은 자산까지 합치면 <span class="hl">${diff >= 0 ? '본주' : '커버드콜'}</span> 쪽이 <span class="hl">${won(Math.abs(diff))}</span> 많습니다.`;
+    $('d-verdict-sub').innerHTML = `커버드콜은 분배금(세후)을 전부 생활비로, 본주는 매년 평가금액의 <strong>${o.rate}%</strong>를 매달 나눠 꺼냈습니다. 처음 넣은 돈은 둘 다 <strong>${won(o.initial)}</strong>입니다.`;
+  }
+
+  const card = (cls, who, name, acc, v, x, extra) => `
+    <div class="vs-card ${cls}">
+      <div class="vs-who">${who}</div>
+      <div class="vs-name">${esc(name)}</div>
+      <div class="vs-line big"><span>남은 자산</span><b>${won(v)}</b></div>
+      <div class="vs-line"><span>쓴 생활비 누계</span><b>${won(acc.spent)}</b></div>
+      <div class="vs-line"><span>남은 자산 + 쓴 생활비</span><b>${won(v + acc.spent)}</b></div>
+      <div class="vs-line"><span>낸 세금</span><b>${won(acc.tax)}</b></div>
+      <div class="vs-line"><span>연환산 수익률 (생활비 포함)</span><b class="${signCls(x)}">${x == null ? '—' : pctS(x)}</b></div>
+      ${extra || ''}
+    </div>`;
+  const dep = r.B.depletedAt != null ? `<span class="skull">💀 ${ymd(D.dates[r.B.depletedAt])}에 자산 소진</span>` : '';
+  $('d-vs').innerHTML = card('a', '커버드콜 · 분배금으로 생활', ccName, r.A, vA, xA,
+    `<div class="vs-line"><span>월평균 생활비</span><b>${won(r.A.spent / Math.max(1, months))}</b></div>`)
+    + card('b', o.mode === 'match' ? '본주 · 같은 금액을 팔아서 생활' : `본주 · 매년 ${o.rate}% 꺼내서 생활`, bName, r.B, vB, xB, dep);
+
+  // 차트 1
+  const labels = D.dates.slice(o.i0, o.i1 + 1);
+  const view = segVal('d-c1-view'), log = segVal('d-c1-scale') === 'log';
+  const serA = view === 'total' ? r.sA.map((v, k) => v + r.cA[k]) : r.sA;
+  const serB = view === 'total' ? r.sB.map((v, k) => v + r.cB[k]) : r.sB;
+  $('d-c1-title').textContent = view === 'total' ? '남은 자산 + 쓴 생활비' : '남은 자산 비교';
+  $('d-c1-sub').textContent = view === 'total' ? '지금까지 꺼내 쓴 생활비까지 더한 금액입니다. 같은 금액 방식이면 두 선의 생활비 부분은 같습니다.' : '생활비를 꺼내고 난 뒤 각자 계좌에 남은 평가금액입니다.';
+  drawLine('d-chart1', labels, [
+    { label: ccName, _short: '커버드콜', data: serA, borderColor: '#D9542B' },
+    { label: bName, _short: '본주', data: serB, borderColor: '#8B6F47' },
+    { label: '처음 넣은 돈', data: labels.map(() => o.initial), borderColor: '#9B9387', borderDash: [5, 4], borderWidth: 1.5, _noEnd: true },
+  ], log);
+
+  // 차트 2: 월별 생활비
+  const keys = [...new Set([...r.mA.keys(), ...r.mB.keys()])].sort();
+  const ds2 = [{ label: '커버드콜 분배금(세후)', data: keys.map(k => r.mA.get(k) || 0), backgroundColor: '#D9542B' }];
+  if (o.mode === 'rate') ds2.push({ label: '본주에서 꺼낸 생활비', data: keys.map(k => r.mB.get(k) || 0), backgroundColor: '#C4A57B' });
+  $('d-c2-sub').textContent = o.mode === 'rate'
+    ? '커버드콜 분배금(세후)과 본주에서 매달 꺼낸 생활비입니다. 분배금은 매달 같지 않습니다.'
+    : '커버드콜 분배금(세후)이 달마다 얼마였는지 보여 줍니다. 본주도 같은 날 같은 금액을 꺼냈습니다.';
+  drawBars('d-chart2', keys, ds2);
+
+  // 표
+  const rows = [];
+  let pA = 0, pB = 0;
+  for (const { y, i } of yearEnds(o.i0, o.i1)) {
+    const k = i - o.i0;
+    const sa = r.cA[k] - pA, sb = r.cB[k] - pB; pA = r.cA[k]; pB = r.cB[k];
+    const gap = r.sB[k] - r.sA[k];
+    rows.push(`<tr><td>${y}</td><td>${won(sa)}</td><td>${won(r.sA[k])}</td><td>${won(sb)}</td><td>${won(r.sB[k])}</td><td class="${signCls(gap)}">${gap >= 0 ? '+' : ''}${won(gap)}</td></tr>`);
+  }
+  $('d-table').querySelector('tbody').innerHTML = rows.join('');
+
+  // 인사이트
+  const short = yrs < 3 ? ` 다만 ${yrText(yrs)}은 짧은 기간이라, 시작일을 바꿔 가며 결과가 어떻게 달라지는지 꼭 확인해 보세요.` : ' 시작일을 바꿔 보면 결과가 어떻게 달라지는지도 확인할 수 있습니다.';
+  const pr = totalReturn(D, o.base, o.i0, o.i1), pc = totalReturn(D, o.cc, o.i0, o.i1);
+  const mkt = pr ? `같은 기간 ${bName}의 주가는 ${pctS(pr.price)}, ${ccName}의 주가는 ${pctS(pc.price)} 움직였습니다.` : '';
+  if (o.mode === 'match') {
+    if (vB >= vA) {
+      $('d-insight-title').textContent = `같은 생활비를 쓰고도 본주 쪽이 ${won(vB - vA)} 더 남았습니다`;
+      $('d-insight-desc').innerHTML = `${mkt} 커버드콜은 콜옵션을 팔아 받은 돈을 분배금으로 나눠 주는 대신, 크게 오를 때 상승분 일부를 포기합니다. <strong>분배금은 공짜가 아니라 미래 상승분을 미리 현금으로 받는 것</strong>에 가깝다는 뜻입니다.${short}`;
+    } else {
+      $('d-insight-title').textContent = `이 기간엔 커버드콜 쪽이 ${won(vA - vB)} 더 남았습니다`;
+      $('d-insight-desc').innerHTML = `${mkt} 옆으로 기거나 내리는 구간에서는 옵션을 팔아 받은 돈이 <strong>방어막</strong> 역할을 합니다. 반대로 크게 오르는 구간이 끼면 결과가 뒤집힐 수 있습니다.${short}`;
+    }
+  } else {
+    const tA = vA + r.A.spent, tB = vB + r.B.spent;
+    $('d-insight-title').textContent = `생활비를 더 많이 쓴 쪽은 ${r.A.spent >= r.B.spent ? '커버드콜' : '본주'}, 남은 것까지 합치면 ${tB >= tA ? '본주' : '커버드콜'}`;
+    $('d-insight-desc').innerHTML = `${mkt} 커버드콜은 분배금이 높은 만큼 매달 쓸 돈이 많지만, 그만큼 계좌에서 빠져나가는 돈도 많습니다. 본주를 정률로 꺼내면 생활비는 적어도 자산이 덜 줄어듭니다. <strong>얼마를 쓰고 얼마를 남길지</strong>는 인출률을 바꿔 가며 비교해 보세요.${short}`;
+  }
+  syncHash();
+}
+
+// ============================================================
+// 02 분배금 재투자 백테스트
+// ============================================================
+function readBt() {
+  const cc = $('b-cc').value, cmp = $('b-cmp').value, policy = radio('b-policy');
+  const target = policy === 'other' ? $('b-target').value : null;
+  const last = D.dates.length - 1, s = startOf([cc, cmp, target]);
+  let i0 = Math.max(s, idxFromInput($('b-start').value, s));
+  let i1 = Math.min(last, idxFromInput($('b-end').value, last));
+  if (i1 <= i0) { i0 = s; i1 = last; }
+  return {
+    cc, cmp, policy, target, i0, i1,
+    initial: Math.max(0, +$('b-initial').value || 0) * 10000,
+    monthly: Math.max(0, +$('b-monthly').value || 0) * 10000,
+    taxMode: radio('b-tax'),
+  };
+}
+const POLICY_TEXT = { reinvest: '분배금을 같은 ETF에 재투자', other: '분배금으로 다른 ETF 매수', cash: '분배금을 현금으로 보유', spend: '분배금을 생활비로 사용' };
+function runBtUI() {
+  const o = readBt();
+  $('b-target-wrap').classList.toggle('is-hidden', o.policy !== 'other');
+  if (o.initial <= 0 && o.monthly <= 0) { $('b-verdict-main').textContent = '초기 투자금이나 월 적립액을 넣어 주세요.'; return; }
+  const r = runBacktest(D, o);
+  const vA = r.A.value(o.i1), vB = r.B.value(o.i1);
+  const yrs = yearsBetween(o.i0, o.i1);
+  const xA = xirr(D, [...r.A.flows, [o.i1, vA]]), xB = xirr(D, [...r.B.flows, [o.i1, vB]]);
+  const mA = mdd(r.sA.map((v, k) => v + (o.policy === 'spend' ? r.sSpentA[k] : 0))), mB = mdd(r.sB);
+  const ccName = nm(o.cc), cmpName = nm(o.cmp);
+  const stratName = `${ccName} · ${POLICY_TEXT[o.policy]}${o.policy === 'other' ? `(${nm(o.target)})` : ''}`;
+  const totA = vA + r.A.spent;
+
+  $('b-verdict-main').innerHTML = `넣은 돈 <span class="hl">${won(r.A.invested)}</span> → 내 전략 <span class="hl">${won(totA)}</span>`
+    + `<br>같은 돈을 ${esc(cmpName)}에 넣었다면 <span class="hl">${won(vB)}</span>`;
+  $('b-verdict-sub').innerHTML = `${ymd(D.dates[o.i0])} ~ ${ymd(D.dates[o.i1])} · ${yrText(yrs)} · ${o.taxMode === 'general' ? '일반계좌' : '절세계좌'} · ${esc(POLICY_TEXT[o.policy])}`
+    + (o.policy === 'spend' ? `<br>내 전략 금액에는 생활비로 쓴 <strong>${won(r.A.spent)}</strong>이 포함돼 있습니다.` : '')
+    + (o.policy === 'cash' ? `<br>내 전략 금액에는 쌓아 둔 현금 <strong>${won(r.A.cash)}</strong>이 포함돼 있습니다.` : '');
+
+  const st = (cls, label, value, sub) => `<div class="stat-card ${cls}"><div class="stat-label">${label}</div><div class="stat-value">${value}</div><div class="stat-sub">${sub}</div></div>`;
+  $('b-stats').innerHTML =
+    st('accent', '내 전략 최종 금액', won(totA), o.policy === 'spend' ? `남은 자산 ${won(vA)} + 쓴 생활비` : '팔기 전 평가금액')
+    + st('', '비교 대상 최종 금액', won(vB), esc(cmpName) + ' · 분배금 재투자')
+    + st('', '연환산 수익률 (XIRR)', `<span class="${signCls(xA)}">${xA == null ? '—' : pctS(xA)}</span>`, `비교 대상 ${xB == null ? '—' : pctS(xB)}`)
+    + st('', '최대 낙폭 (MDD)', `<span class="down">${pctS(mA)}</span>`, `비교 대상 ${pctS(mB)}`)
+    + st('', '받은 분배금 (세후)', won(r.A.divNet), `세전 ${won(r.A.divGross)}`)
+    + st('', '낸 세금', won(r.A.tax), o.taxMode === 'general' ? `비교 대상 ${won(r.B.tax)}` : '절세계좌 가정')
+    + st('', '넣은 돈', won(r.A.invested), o.monthly > 0 ? `초기 ${won(o.initial)} + 월 ${won(o.monthly)}` : '거치식')
+    + st('', '차이 (내 전략 − 비교)', `<span class="${signCls(totA - vB)}">${totA - vB >= 0 ? '+' : ''}${won(totA - vB)}</span>`, totA >= vB ? '내 전략이 많음' : '비교 대상이 많음');
+
+  const labels = D.dates.slice(o.i0, o.i1 + 1);
+  const log = segVal('b-scale') === 'log';
+  const serA = o.policy === 'spend' ? r.sA.map((v, k) => v + r.sSpentA[k]) : r.sA;
+  drawLine('b-chart', labels, [
+    { label: o.policy === 'spend' ? '내 전략 (남은 자산 + 쓴 생활비)' : '내 전략', _short: '내 전략', data: serA, borderColor: '#D9542B' },
+    { label: cmpName, _short: '비교', data: r.sB, borderColor: '#8B6F47' },
+    { label: '넣은 돈 누계', data: r.sInv, borderColor: '#9B9387', borderDash: [5, 4], borderWidth: 1.5, _noEnd: true },
+  ], log);
+  $('b-c-sub').textContent = `${stratName} vs 같은 돈을 ${cmpName}에 그대로 넣고 분배금까지 재투자했을 때`;
+
+  // 연도별: 그해 분배금·세금은 연말 누계 차이로
+  const rows = [];
+  const yrs2 = yearEnds(o.i0, o.i1);
+  // 연도별 분배금·세금 누계를 구하려고 한 번 더 돌리지 않고, 계좌 기록을 연말마다 저장해 둔다
+  const snap = btYearSnap(o);
+  let pd = 0, pt = 0;
+  yrs2.forEach(({ y, i }, n) => {
+    const k = i - o.i0, sn = snap[n];
+    rows.push(`<tr><td>${y}</td><td>${won(r.sInv[k])}</td><td>${won(serA[k])}</td><td>${won(r.sB[k])}</td><td>${won(sn.div - pd)}</td><td>${won(sn.tax - pt)}</td></tr>`);
+    pd = sn.div; pt = sn.tax;
+  });
+  $('b-table').querySelector('tbody').innerHTML = rows.join('');
+
+  // 인사이트
+  const tr = totalReturn(D, o.cc, o.i0, o.i1);
+  if (o.policy === 'cash' || o.policy === 'spend') {
+    $('b-insight-title').textContent = `분배금을 재투자하지 않으면 주가만 남습니다 — ${ccName} 주가 ${pctS(tr.price)}`;
+    $('b-insight-desc').innerHTML = `같은 기간 분배금을 전부 재투자했다면 총수익은 ${pctS(tr.total)}(세전)입니다. 가격 수익률과 총수익의 차이 <strong>${((tr.total - tr.price) * 100).toFixed(1)}%p</strong>가 분배금으로 꺼내 준 몫입니다. 커버드콜은 이 몫이 큰 상품이라, 분배금을 쓰면 원금(주가)이 얼마나 지켜지는지가 핵심입니다.`;
+  } else if (o.policy === 'other') {
+    $('b-insight-title').textContent = `분배금으로 ${nm(o.target)}를 사 모은 결과, 같은 ETF 재투자와 비교해 보세요`;
+    $('b-insight-desc').innerHTML = `커버드콜에서 나온 현금으로 성장형 ETF를 사 모으면, 커버드콜이 포기한 상승분을 일부 되찾는 효과가 있습니다. 대신 분배금에 세금이 붙는 일반계좌에서는 떼인 세금만큼 덜 삽니다. 위에서 처리 방식을 "같은 ETF에 재투자"로 바꿔 차이를 확인해 보세요.`;
+  } else {
+    $('b-insight-title').textContent = totA >= vB ? `이 기간엔 커버드콜 재투자가 ${won(totA - vB)} 앞섰습니다` : `이 기간엔 ${cmpName}가 ${won(vB - totA)} 앞섰습니다`;
+    $('b-insight-desc').innerHTML = `분배금을 전부 재투자해도 일반계좌에서는 분배금마다 세금(과세표준액 × 15.4%)을 떼고 다시 삽니다. 이 기간 낸 세금은 <strong>${won(r.A.tax)}</strong>입니다. 계좌를 절세계좌로 바꾸면 세금이 결과를 얼마나 바꾸는지 볼 수 있습니다.`;
+  }
+  syncHash();
+}
+function btYearSnap(o) {
+  // runBacktest와 같은 계산을 연말마다 멈춰 누계 분배금(세후)·세금 기록
+  const out = [];
+  const ends = new Set(yearEnds(o.i0, o.i1).map(x => x.i));
+  const r = runBacktest(D, Object.assign({}, o, { _snap: (i, A) => { if (ends.has(i)) out.push({ div: A.divNet, tax: A.tax }); } }));
+  return out.length ? out : [{ div: r.A.divNet, tax: r.A.tax }];
+}
+
+// ============================================================
+// 03 현황판
+// ============================================================
+let boardSort = { k: 'total', asc: false };
+let boardGroup = 'all', boardGen = 'all';
+function boardRows() {
+  const last = D.dates.length - 1;
+  const per = segVal('bd-period');
+  const endDate = ymdToDate(D.dates[last]);
+  const out = [];
+  for (const c of CC) {
+    const e = D.etfs[c];
+    let i0;
+    if (per === 'all') i0 = e.s;
+    else {
+      const from = new Date(endDate); from.setUTCFullYear(from.getUTCFullYear() - (+per));
+      const fs = `${from.getUTCFullYear()}${String(from.getUTCMonth() + 1).padStart(2, '0')}${String(from.getUTCDate()).padStart(2, '0')}`;
+      i0 = idxFromInput(ymd(fs));
+      if (i0 < e.s) i0 = null;
+    }
+    const t12 = trailing12(D, c, last);
+    const has12 = yearsBetween(e.s, last) >= 0.98;
+    const p = priceAt(D, c, last);
+    const tr = i0 != null ? totalReturn(D, c, i0, last) : null;
+    const b = baseFor(c);
+    const bt = i0 != null && D.etfs[b] && i0 >= D.etfs[b].s ? totalReturn(D, b, i0, last) : null;
+    out.push({
+      c, e, gen: GEN[c] || 'x', i0,
+      y12: has12 ? t12.d / p : null, taxr: has12 && t12.d > 0 ? t12.t / t12.d : null,
+      taxrPart: !has12 && t12.d > 0 ? t12.t / t12.d : null,
+      price: tr ? tr.price : null, total: tr ? tr.total : null,
+      base: bt ? bt.total : null, baseCode: (BASE_BY_CODE[c] || BASE_BY_GROUP[e.grp]) ? b : null,
+    });
+  }
+  return out;
+}
+function renderBoard() {
+  let rows = boardRows().filter(r => (boardGroup === 'all' || r.e.grp === boardGroup) && (boardGen === 'all' || r.gen === boardGen));
+  const k = boardSort.k, dir = boardSort.asc ? 1 : -1;
+  rows.sort((a, b) => {
+    if (k === 'name') return dir * a.e.n.localeCompare(b.e.n, 'ko');
+    const va = a[k], vb = b[k];
+    if (va == null && vb == null) return 0;
+    if (va == null) return 1; if (vb == null) return -1;
+    return dir * (va - vb);
+  });
+  document.querySelectorAll('#bd-table th').forEach(th => {
+    th.classList.toggle('sorted', th.dataset.k === k);
+    th.classList.toggle('asc', th.dataset.k === k && boardSort.asc);
+  });
+  const per = segVal('bd-period');
+  const html = rows.map(r => {
+    const g = r.gen === 'x' ? '<span class="gen gx">분류 보류</span>' : `<span class="gen ${GEN_CLS[r.gen]}">${GEN_LABEL[r.gen]}</span>`;
+    const from = r.i0 != null ? `<span class="cell-sub">${ymd(D.dates[r.i0])}부터</span>` : '';
+    const na = `<span class="muted">${per === 'all' ? '—' : '상장 기간 부족'}</span>`;
+    const gap = r.total != null && r.price != null ? r.total - r.price : null;
+    return `<tr data-c="${r.c}">
+      <td><span class="b-name">${esc(r.e.n)}</span><span class="b-meta">${g}${esc(GROUP_NAME[r.e.grp] || r.e.grp)} · 상장 ${esc(r.e.list || '-')}</span></td>
+      <td>${r.y12 != null ? pct2(r.y12) : '<span class="muted">1년 미만</span>'}</td>
+      <td>${r.taxr != null ? Math.round(r.taxr * 100) + '%' : r.taxrPart != null ? `<span class="muted">${Math.round(r.taxrPart * 100)}%</span><span class="cell-sub">상장 후 전체</span>` : '—'}</td>
+      <td>${r.price != null ? `<span class="${signCls(r.price)}">${pctS(r.price)}</span>${from}` : na}</td>
+      <td>${r.total != null ? `<span class="${signCls(r.total)}">${pctS(r.total)}</span>${gap != null ? `<span class="cell-sub">분배금 몫 ${(gap * 100).toFixed(1)}%p</span>` : ''}` : na}</td>
+      <td>${r.base != null ? `<span class="${signCls(r.base)}">${pctS(r.base)}</span><span class="cell-sub">${esc(nm(r.baseCode))}</span>` : '<span class="muted">—</span>'}</td>
+    </tr>`;
+  }).join('');
+  $('bd-table').querySelector('tbody').innerHTML = html || '<tr><td colspan="6" class="muted">조건에 맞는 종목이 없습니다</td></tr>';
+  const last = D.dates.length - 1;
+  $('bd-note').innerHTML = `12개월 분배율 = 최근 12개월 분배금 합 ÷ ${ymd(D.dates[last])} 종가. 과세 비율 = 최근 12개월 과세표준액 합 ÷ 분배금 합(100%면 분배금 전액 과세). `
+    + `본주 총수익은 같은 기간 비교 본주의 분배금 재투자(세전) 수익률이고, 비교할 본주가 마땅치 않은 종목은 비워 뒀습니다. 수익률은 ${per === 'all' ? '종목마다 계산 가능한 첫날(표에 표시)부터' : per + '년 전 같은 날부터'} ${ymd(D.dates[last])}까지입니다.`;
+}
+
+// ============================================================
+// 해시·초기화
+// ============================================================
+let currentTab = 'duel';
+function showTab(t) {
+  currentTab = t;
+  document.querySelectorAll('.mode-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'panel-' + t));
+  if (t === 'board') renderBoard();
+  else if (t === 'bt') runBtUI();
+  else runDuelUI();
+  placeUnits();
+  syncHash();
+}
+let hashLock = false;
+function syncHash() {
+  if (hashLock || !D) return;
+  const code = currentTab === 'bt' ? $('b-cc').value : $('d-cc').value;
+  const h = currentTab === 'board' ? '#board' : `#${code.toLowerCase()}${currentTab === 'bt' ? '-bt' : ''}`;
+  if (location.hash !== h) history.replaceState(null, '', h);
+}
+function applyHash() {
+  const h = decodeURIComponent(location.hash.slice(1)).toUpperCase();
+  if (!h) return false;
+  if (h === 'BOARD') { showTab('board'); return true; }
+  const [code, tab] = h.split('-');
+  if (!D.etfs[code] || D.etfs[code].kind !== 'cc') return false;
+  hashLock = true;
+  selectCC(code);
+  hashLock = false;
+  showTab(tab === 'BT' ? 'bt' : 'duel');
+  return true;
+}
+function selectCC(code) {
+  $('d-cc').value = code; $('b-cc').value = code;
+  const b = baseFor(code);
+  $('d-base').value = b; $('b-cmp').value = b; $('b-target').value = b;
+  pairHint();
+  setDateRange('d', [code, b], false);
+  setDateRange('b', [code, b, radio('b-policy') === 'other' ? b : null], false);
+}
+function pairHint() {
+  const c = $('d-cc').value, e = D.etfs[c];
+  const g = GEN[c] ? GEN_LABEL[GEN[c]] : '세대 분류 보류';
+  $('d-pair-hint').textContent = `${e.n} · ${GROUP_NAME[e.grp] || e.grp} · ${g}${e.desc ? ' · ' + e.desc : ''}`;
+  const c2 = $('b-cc').value, e2 = D.etfs[c2];
+  $('b-pair-hint').textContent = `${e2.n} · ${GROUP_NAME[e2.grp] || e2.grp} · ${GEN[c2] ? GEN_LABEL[GEN[c2]] : '세대 분류 보류'}${e2.desc ? ' · ' + e2.desc : ''}`;
+}
+
+function bind() {
+  document.querySelectorAll('.mode-tab').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+  // 생활비 대결
+  $('d-cc').addEventListener('change', () => {
+    const c = $('d-cc').value; $('d-base').value = baseFor(c); pairHint();
+    setDateRange('d', [c, $('d-base').value], false); runDuelUI();
+  });
+  $('d-base').addEventListener('change', () => { setDateRange('d', [$('d-cc').value, $('d-base').value], true); runDuelUI(); });
+  ['d-start', 'd-end', 'd-rate'].forEach(id => $(id).addEventListener('change', runDuelUI));
+  document.querySelectorAll('input[name="d-tax"],input[name="d-mode"]').forEach(x => x.addEventListener('change', () => { syncRadios(); runDuelUI(); }));
+  $('d-left').addEventListener('click', ev => {
+    const b = ev.target.closest('.chip'); if (!b) return;
+    $('d-left').querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x === b)); runDuelUI();
+  });
+  ['d-c1-view', 'd-c1-scale', 'b-scale', 'bd-period'].forEach(id => $(id).addEventListener('click', ev => {
+    const b = ev.target.closest('button'); if (!b) return;
+    $(id).querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+    if (id === 'bd-period') renderBoard(); else if (id === 'b-scale') runBtUI(); else runDuelUI();
+  }));
+  // 백테스트
+  $('b-cc').addEventListener('change', () => {
+    const c = $('b-cc').value, b = baseFor(c);
+    $('b-cmp').value = b; if (radio('b-policy') !== 'other') $('b-target').value = b; pairHint();
+    setDateRange('b', [c, b, radio('b-policy') === 'other' ? $('b-target').value : null], false); runBtUI();
+  });
+  ['b-cmp', 'b-target'].forEach(id => $(id).addEventListener('change', () => {
+    setDateRange('b', [$('b-cc').value, $('b-cmp').value, radio('b-policy') === 'other' ? $('b-target').value : null], true); runBtUI();
+  }));
+  document.querySelectorAll('input[name="b-policy"],input[name="b-tax"]').forEach(x => x.addEventListener('change', () => {
+    syncRadios();
+    setDateRange('b', [$('b-cc').value, $('b-cmp').value, radio('b-policy') === 'other' ? $('b-target').value : null], true);
+    runBtUI();
+  }));
+  ['b-start', 'b-end'].forEach(id => $(id).addEventListener('change', runBtUI));
+  // 금액 입력·칩
+  let t = null;
+  ['d-initial', 'b-initial', 'b-monthly'].forEach(id => $(id).addEventListener('input', () => {
+    updateDisplays(); clearTimeout(t);
+    t = setTimeout(() => (id[0] === 'd' ? runDuelUI() : runBtUI()), 250);
+  }));
+  document.querySelectorAll('.chips[data-target]').forEach(ch => ch.addEventListener('click', ev => {
+    const b = ev.target.closest('.chip'); if (!b) return;
+    $(ch.dataset.target).value = b.dataset.v; updateDisplays();
+    ch.dataset.target[0] === 'd' ? runDuelUI() : runBtUI();
+  }));
+  // 현황판
+  $('bd-group').addEventListener('click', ev => {
+    const b = ev.target.closest('.chip'); if (!b) return;
+    boardGroup = b.dataset.v; $('bd-group').querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x === b)); renderBoard();
+  });
+  $('bd-gen').addEventListener('click', ev => {
+    const b = ev.target.closest('.chip'); if (!b) return;
+    boardGen = b.dataset.v; $('bd-gen').querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x === b)); renderBoard();
+  });
+  document.querySelectorAll('#bd-table th').forEach(th => th.addEventListener('click', () => {
+    const k = th.dataset.k;
+    boardSort = boardSort.k === k ? { k, asc: !boardSort.asc } : { k, asc: k === 'name' };
+    renderBoard();
+  }));
+  $('bd-table').querySelector('tbody').addEventListener('click', ev => {
+    const tr = ev.target.closest('tr[data-c]'); if (!tr) return;
+    selectCC(tr.dataset.c); showTab('duel');
+    document.querySelector('.mode-tabs').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  window.addEventListener('hashchange', applyHash);
+  let rt = null;
+  window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(placeUnits, 150); });
+}
+
+async function init() {
+  try {
+    const res = await fetch(DATA_URL, { cache: 'no-cache' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const raw = await res.json();
+    D = makeData(raw);
+    CC = Object.keys(raw.etfs).filter(c => raw.etfs[c].kind === 'cc');
+    BASES = Object.keys(raw.etfs).filter(c => raw.etfs[c].kind === 'base');
+    let lastDiv = '';
+    for (const c of CC) for (const r of raw.etfs[c].dv) if (raw.dates[r[0]] > lastDiv) lastDiv = raw.dates[r[0]];
+    $('data-line').innerHTML = `국내상장 커버드콜 <b>${CC.length}종</b> · 종가 <b>${ymd(raw.priceDate)}</b> 기준 · 분배금·과세표준액은 <b>${ymd(lastDiv)}</b> 분배락분까지 · 계산 가능한 기간은 최대 <b>${ymd(raw.dates[0])}</b>부터`;
+    $('foot-date').textContent = `종가 ${ymd(raw.priceDate)} 기준 · 데이터는 평일 저녁 자동 갱신`;
+  } catch (ex) {
+    $('data-line').textContent = '';
+    $('app-error').innerHTML = `<div class="err">데이터를 불러오지 못했습니다(${esc(ex.message)}). 잠시 뒤 새로고침해 주세요.</div>`;
+    return;
+  }
+  $('d-cc').innerHTML = ccOptions(false); $('b-cc').innerHTML = ccOptions(false);
+  $('d-base').innerHTML = baseOptions(); $('b-cmp').innerHTML = baseOptions(); $('b-target').innerHTML = baseOptions();
+  $('bd-group').innerHTML = '<button class="chip on" data-v="all">전체</button>' + GROUPS.filter(([g]) => CC.some(c => D.etfs[c].grp === g)).map(([g, l]) => `<button class="chip" data-v="${g}">${esc(l)}</button>`).join('');
+  $('bd-gen').innerHTML = '<button class="chip on" data-v="all">전체</button>' + ['1', '2', '2.5', '3'].map(g => `<button class="chip" data-v="${g}">${GEN_LABEL[g]}</button>`).join('') + '<button class="chip" data-v="x">분류 보류</button>';
+  bind();
+  updateDisplays();
+  if (!applyHash()) { selectCC(D.etfs['289480'] ? '289480' : CC[0]); showTab('duel'); }
+}
+init();
+
+</script>
+</body>
+</html>

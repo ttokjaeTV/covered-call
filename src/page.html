@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>커버드콜 계산기 · 똑재TV</title>
+<meta name="description" content="국내상장 커버드콜 ETF 61종의 실제 종가·분배금·과세표준액으로, 분배금으로 생활했을 때와 본주를 팔아 생활했을 때를 비교합니다. 분배금 재투자 백테스트와 세대별 현황판 포함.">
+<meta property="og:title" content="커버드콜 계산기 · 똑재TV">
+<meta property="og:description" content="높은 분배금, 정말 남는 장사일까? 국내상장 커버드콜 ETF 실제 데이터로 생활비 대결·재투자 백테스트.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+{{CSS}}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="https://ttokjaetv.github.io/" class="hub-back">← 똑재TV 계산기 모음</a>
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon">똑</div>
+      <div>
+        <div class="logo-name">똑재TV</div>
+        <div class="logo-sub">COVERED CALL CALCULATOR</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="hero">
+    <span class="tag"><span class="dot"></span>커버드콜 계산기</span>
+    <h1 class="hero-title">
+      높은 분배금,<br>
+      <span class="underline-mark">정말 남는 장사</span>일까?
+    </h1>
+    <p class="hero-desc">
+      국내상장 커버드콜 ETF의 실제 종가·분배금·과세표준액으로 계산합니다.<br>
+      분배금으로 생활한 사람과 본주를 팔아 생활한 사람, 몇 년 뒤 누구에게 더 많이 남았을까요?
+    </p>
+  </div>
+
+  <div class="top-cta">
+    <div class="top-cta-text">💡 <strong>커버드콜, 어떤 구조인지부터</strong> 궁금하신가요? 똑재TV에서 매주 만나보세요.</div>
+    <div class="top-cta-links">
+      <a href="https://www.youtube.com/@ttok_jae" target="_blank" rel="noopener" class="top-cta-link primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+        똑재TV 구독하기
+      </a>
+      <a href="https://cafe.naver.com/ttokjae" target="_blank" rel="noopener" class="top-cta-link">
+        <span class="naver-mark">N</span>
+        평생 ETF 투자 카페
+      </a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="step-label"><div class="step-line"></div><span class="step-text">무엇이 궁금하세요?</span></div>
+    <div class="mode-tabs" role="tablist">
+      <button class="mode-tab active" data-tab="duel" role="tab">
+        <span class="mt-num">01</span>
+        <span class="mt-title">생활비 대결</span>
+        <span class="mt-desc">분배금으로 생활 vs 본주 팔아서 생활</span>
+      </button>
+      <button class="mode-tab" data-tab="bt" role="tab">
+        <span class="mt-num">02</span>
+        <span class="mt-title">분배금 재투자 백테스트</span>
+        <span class="mt-desc">분배금을 어디에 다시 넣느냐에 따라</span>
+      </button>
+      <button class="mode-tab" data-tab="board" role="tab">
+        <span class="mt-num">03</span>
+        <span class="mt-title">커버드콜 현황판</span>
+        <span class="mt-desc">얼마나 올랐고, 얼마나 주고, 얼마나 과세되나</span>
+      </button>
+    </div>
+  </div>
+  <p class="data-line" id="data-line">데이터 불러오는 중…</p>
+
+  <div id="app-error"></div>
+
+  <!-- ================= 01 생활비 대결 ================= -->
+  <section class="panel on" id="panel-duel">
+    <div class="card">
+      <div class="step-label"><div class="step-line"></div><span class="step-text">STEP 01 / 누구와 누구를 비교할까요?</span></div>
+      <h2 class="card-title">커버드콜과 본주를 고르세요</h2>
+      <p class="card-subtitle">같은 돈으로 출발해서, 커버드콜은 분배금(세후)만으로 생활하고 본주는 필요한 만큼 팔아서 생활합니다.</p>
+      <div class="grid-2">
+        <div class="input-group">
+          <label class="label" for="d-cc">커버드콜 ETF</label>
+          <select id="d-cc"></select>
+        </div>
+        <div class="input-group">
+          <label class="label" for="d-base">비교할 본주</label>
+          <select id="d-base"></select>
+          <div class="input-hint">커버드콜이 따라가는 지수의 일반 ETF를 자동으로 골라 둡니다. 바꿔도 됩니다.</div>
+        </div>
+      </div>
+      <div class="pair-hint" id="d-pair-hint"></div>
+    </div>
+
+    <div class="card">
+      <div class="step-label"><div class="step-line"></div><span class="step-text">STEP 02 / 조건</span></div>
+      <h2 class="card-title">은퇴 자금과 기간</h2>
+      <p class="card-subtitle">금액은 <strong>만원 단위</strong>입니다. 두 사람 모두 시작일 종가에 한 번에 삽니다(거치식).</p>
+      <div class="grid-3">
+        <div class="input-group">
+          <label class="label" for="d-initial">초기 투자금</label>
+          <div class="input-wrap">
+            <input type="number" id="d-initial" data-unit="만원" value="30000" step="1000" min="100">
+            <span class="input-currency" id="d-initial-display">3억원</span>
+          </div>
+          <div class="chips" data-target="d-initial">
+            <button class="chip" data-v="10000">1억</button>
+            <button class="chip" data-v="30000">3억</button>
+            <button class="chip" data-v="50000">5억</button>
+            <button class="chip" data-v="100000">10억</button>
+          </div>
+        </div>
+        <div class="input-group">
+          <label class="label" for="d-start">시작일</label>
+          <input type="date" id="d-start">
+          <div class="input-hint" id="d-start-hint"></div>
+        </div>
+        <div class="input-group">
+          <label class="label" for="d-end">종료일</label>
+          <input type="date" id="d-end">
+          <div class="input-hint">특정 구간만 잘라 볼 수 있습니다</div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top:6px;">
+        <div class="sub-card">
+          <div class="sub-card-title">계좌</div>
+          <div class="radio-row">
+            <label class="radio-opt on"><input type="radio" name="d-tax" value="general" checked><span><span class="ro-title">일반계좌</span><span class="ro-desc" style="display:block;">분배금 세금(과세표준액 × 15.4%)을 떼고, 국내상장 해외 ETF를 팔 때 차익 세금(추정)도 뗍니다</span></span></label>
+            <label class="radio-opt"><input type="radio" name="d-tax" value="shelter"><span><span class="ro-title">연금저축·IRP·ISA 같은 절세계좌</span><span class="ro-desc" style="display:block;">운용 중 세금 없이 계산합니다(과세이연). 꺼낼 때 내는 세금은 반영하지 않습니다</span></span></label>
+          </div>
+        </div>
+        <div class="sub-card">
+          <div class="sub-card-title">본주는 생활비를 어떻게 꺼낼까요?</div>
+          <div class="radio-row">
+            <label class="radio-opt on"><input type="radio" name="d-mode" value="match" checked><span><span class="ro-title">커버드콜과 같은 금액</span><span class="ro-desc" style="display:block;">커버드콜이 분배금을 받은 날, 같은 금액을 본주에서 꺼냅니다 → 남은 자산만 비교하면 됩니다</span></span></label>
+            <label class="radio-opt"><input type="radio" name="d-mode" value="rate"><span><span class="ro-title">매년 정해진 비율(정률)</span><span class="ro-desc" style="display:block;">매년 첫 거래일 평가금액 × 인출률을 1년 생활비로 정하고, 매달 첫 거래일에 1/12씩 꺼냅니다</span>
+              <span class="inline-input" id="d-rate-wrap"><input type="number" id="d-rate" value="4" step="0.5" min="0.5" max="30"><span>% / 년</span></span></span></label>
+          </div>
+          <div class="input-hint" style="margin-top:10px;">본주의 분배금(세후)은 먼저 생활비로 쓰고, 모자란 만큼만 팝니다.</div>
+          <div id="d-left-wrap" class="is-hidden" style="margin-top:10px;">
+            <div class="label" style="margin-bottom:6px;">본주 분배금이 그달 생활비보다 많으면</div>
+            <div class="chips" id="d-left">
+              <button class="chip on" data-v="reinvest">남은 돈은 다시 재투자</button>
+              <button class="chip" data-v="spend">남은 돈도 생활비로</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="d-result">
+      <div class="verdict">
+        <div class="verdict-label" id="d-verdict-label">RESULT</div>
+        <div class="verdict-main" id="d-verdict-main">-</div>
+        <div class="verdict-sub" id="d-verdict-sub"></div>
+      </div>
+      <div class="vs-row" id="d-vs"></div>
+
+      <div class="card">
+        <div class="chart-head">
+          <div>
+            <h3 class="chart-title" id="d-c1-title">남은 자산 비교</h3>
+            <p class="chart-subtitle" id="d-c1-sub">생활비를 꺼내고 난 뒤 각자 계좌에 남은 평가금액입니다.</p>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <div class="seg" id="d-c1-view"><button data-v="remain" class="on">남은 자산</button><button data-v="total">남은 자산 + 쓴 생활비</button></div>
+            <div class="seg" id="d-c1-scale"><button data-v="linear" class="on">일반</button><button data-v="log">로그</button></div>
+          </div>
+        </div>
+        <div class="chart-container"><canvas id="d-chart1"></canvas></div>
+      </div>
+
+      <div class="card">
+        <h3 class="chart-title">매달 손에 쥔 생활비</h3>
+        <p class="chart-subtitle" id="d-c2-sub">커버드콜 분배금(세후)이 달마다 얼마였는지 보여 줍니다. 분배금은 매달 같지 않습니다.</p>
+        <div class="chart-container sm"><canvas id="d-chart2"></canvas></div>
+      </div>
+
+      <div class="card">
+        <h3 class="chart-title">연도별 기록</h3>
+        <p class="chart-subtitle">연도 마지막 거래일 기준입니다. 첫해와 마지막 해는 일부 기간입니다.</p>
+        <div class="table-wrap">
+          <table class="data-table" id="d-table">
+            <thead><tr><th>연도</th><th>커버드콜 생활비</th><th>커버드콜 연말 자산</th><th>본주 생활비</th><th>본주 연말 자산</th><th>자산 차이 (본주 − 커버드콜)</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="insight-box">
+        <div class="insight-label">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D9542B" stroke-width="2"><path d="M12 3l1.9 5.8L20 10l-4.5 3.3L17 20l-5-3.5L7 20l1.5-6.7L4 10l6.1-1.2L12 3z"/></svg>
+          <span class="insight-label-text">KEY INSIGHT</span>
+        </div>
+        <h3 class="insight-title" id="d-insight-title">-</h3>
+        <p class="insight-desc" id="d-insight-desc">-</p>
+        <div class="insight-cta">
+          <div class="insight-cta-text">📺 커버드콜 세대별 차이와 노후 인출 전략은 똑재TV에서 자세히 다룹니다.</div>
+          <a href="https://www.youtube.com/@ttok_jae" target="_blank" rel="noopener" class="cta-link primary">똑재TV 구독하기</a>
+          <a href="https://cafe.naver.com/ttokjae" target="_blank" rel="noopener" class="cta-link secondary"><span class="naver-mark">N</span> 평생 ETF 투자 카페</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 02 분배금 재투자 백테스트 ================= -->
+  <section class="panel" id="panel-bt">
+    <div class="card">
+      <div class="step-label"><div class="step-line"></div><span class="step-text">STEP 01 / 종목과 분배금 처리</span></div>
+      <h2 class="card-title">분배금을 어디에 넣을까요?</h2>
+      <p class="card-subtitle">분배락일마다 받은 분배금(세후)을 그날 종가에 고른 곳에 넣습니다. 비교 대상에는 같은 날 같은 돈을 넣고, 그 분배금은 자기에게 재투자합니다.</p>
+      <div class="grid-2">
+        <div class="input-group">
+          <label class="label" for="b-cc">커버드콜 ETF</label>
+          <select id="b-cc"></select>
+        </div>
+        <div class="input-group">
+          <label class="label" for="b-cmp">비교 대상 — 같은 돈을 여기에 그대로 넣었다면?</label>
+          <select id="b-cmp"></select>
+        </div>
+      </div>
+      <div class="sub-card" style="margin-top:4px;">
+        <div class="sub-card-title">분배금(세후) 처리</div>
+        <div class="radio-row h">
+          <label class="radio-opt on"><input type="radio" name="b-policy" value="reinvest" checked><span><span class="ro-title">같은 ETF에 재투자</span><span class="ro-desc" style="display:block;">받은 분배금으로 그 커버드콜을 더 삽니다</span></span></label>
+          <label class="radio-opt"><input type="radio" name="b-policy" value="other"><span><span class="ro-title">다른 ETF 사기</span><span class="ro-desc" style="display:block;">분배금으로 본주 같은 성장형 ETF를 사 모읍니다</span></span></label>
+          <label class="radio-opt"><input type="radio" name="b-policy" value="cash"><span><span class="ro-title">현금으로 모아 두기</span><span class="ro-desc" style="display:block;">재투자하지 않고 쌓아 둡니다(이자 없음)</span></span></label>
+          <label class="radio-opt"><input type="radio" name="b-policy" value="spend"><span><span class="ro-title">생활비로 쓰기</span><span class="ro-desc" style="display:block;">받는 대로 꺼내 씁니다</span></span></label>
+        </div>
+        <div class="input-group is-hidden" id="b-target-wrap" style="margin-top:14px;">
+          <label class="label" for="b-target">분배금으로 살 ETF</label>
+          <select id="b-target"></select>
+        </div>
+      </div>
+      <div class="pair-hint" id="b-pair-hint"></div>
+    </div>
+
+    <div class="card">
+      <div class="step-label"><div class="step-line"></div><span class="step-text">STEP 02 / 조건</span></div>
+      <h2 class="card-title">투자금과 기간</h2>
+      <p class="card-subtitle">금액은 <strong>만원 단위</strong>입니다. 월 적립액은 매달 첫 거래일 종가에 삽니다.</p>
+      <div class="grid-4">
+        <div class="input-group">
+          <label class="label" for="b-initial">초기 투자금</label>
+          <div class="input-wrap">
+            <input type="number" id="b-initial" data-unit="만원" value="5000" step="100" min="0">
+            <span class="input-currency" id="b-initial-display">5,000만원</span>
+          </div>
+          <div class="chips" data-target="b-initial">
+            <button class="chip" data-v="1000">1천</button>
+            <button class="chip" data-v="5000">5천</button>
+            <button class="chip" data-v="10000">1억</button>
+          </div>
+        </div>
+        <div class="input-group">
+          <label class="label" for="b-monthly">월 적립액</label>
+          <div class="input-wrap">
+            <input type="number" id="b-monthly" data-unit="만원" value="0" step="10" min="0">
+            <span class="input-currency" id="b-monthly-display">없음</span>
+          </div>
+          <div class="chips" data-target="b-monthly">
+            <button class="chip" data-v="0">없음</button>
+            <button class="chip" data-v="50">50만</button>
+            <button class="chip" data-v="100">100만</button>
+          </div>
+        </div>
+        <div class="input-group">
+          <label class="label" for="b-start">시작일</label>
+          <input type="date" id="b-start">
+          <div class="input-hint" id="b-start-hint"></div>
+        </div>
+        <div class="input-group">
+          <label class="label" for="b-end">종료일</label>
+          <input type="date" id="b-end">
+        </div>
+      </div>
+      <div class="sub-card" style="margin-top:6px;">
+        <div class="sub-card-title">계좌</div>
+        <div class="radio-row h">
+          <label class="radio-opt on"><input type="radio" name="b-tax" value="general" checked><span><span class="ro-title">일반계좌</span><span class="ro-desc" style="display:block;">분배금 세금 = 과세표준액 × 15.4%</span></span></label>
+          <label class="radio-opt"><input type="radio" name="b-tax" value="shelter"><span><span class="ro-title">절세계좌(세금 없이)</span><span class="ro-desc" style="display:block;">연금저축·IRP·ISA처럼 운용 중 세금을 떼지 않는 경우</span></span></label>
+        </div>
+      </div>
+    </div>
+
+    <div id="b-result">
+      <div class="verdict">
+        <div class="verdict-label">RESULT</div>
+        <div class="verdict-main" id="b-verdict-main">-</div>
+        <div class="verdict-sub" id="b-verdict-sub"></div>
+      </div>
+      <div class="stat-grid" id="b-stats"></div>
+      <div class="card">
+        <div class="chart-head">
+          <div>
+            <h3 class="chart-title">자산 성장 곡선</h3>
+            <p class="chart-subtitle" id="b-c-sub">내 전략(커버드콜 + 분배금 처리) vs 같은 돈을 비교 대상에 그대로 넣고 분배금까지 재투자했을 때</p>
+          </div>
+          <div class="seg" id="b-scale"><button data-v="linear" class="on">일반</button><button data-v="log">로그</button></div>
+        </div>
+        <div class="chart-container"><canvas id="b-chart"></canvas></div>
+      </div>
+      <div class="card">
+        <h3 class="chart-title">연도별 기록</h3>
+        <p class="chart-subtitle">연도 마지막 거래일 기준입니다.</p>
+        <div class="table-wrap">
+          <table class="data-table" id="b-table">
+            <thead><tr><th>연도</th><th>넣은 돈 누계</th><th>내 전략 연말 자산</th><th>비교 대상 연말 자산</th><th>그해 받은 분배금(세후)</th><th>그해 낸 세금</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="insight-box">
+        <div class="insight-label">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D9542B" stroke-width="2"><path d="M12 3l1.9 5.8L20 10l-4.5 3.3L17 20l-5-3.5L7 20l1.5-6.7L4 10l6.1-1.2L12 3z"/></svg>
+          <span class="insight-label-text">KEY INSIGHT</span>
+        </div>
+        <h3 class="insight-title" id="b-insight-title">-</h3>
+        <p class="insight-desc" id="b-insight-desc">-</p>
+        <div class="insight-cta">
+          <div class="insight-cta-text">📺 분배금 재투자 전략과 계좌 선택은 똑재TV에서 자세히 다룹니다.</div>
+          <a href="https://www.youtube.com/@ttok_jae" target="_blank" rel="noopener" class="cta-link primary">똑재TV 구독하기</a>
+          <a href="https://cafe.naver.com/ttokjae" target="_blank" rel="noopener" class="cta-link secondary"><span class="naver-mark">N</span> 평생 ETF 투자 카페</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 03 현황판 ================= -->
+  <section class="panel" id="panel-board">
+    <div class="card">
+      <div class="step-label"><div class="step-line"></div><span class="step-text">현황판 / 국내상장 커버드콜 전체</span></div>
+      <h2 class="card-title">얼마나 올랐고, 얼마나 주고, 얼마나 과세되나</h2>
+      <p class="card-subtitle"><strong>가격 수익률</strong>은 분배금을 빼고 주가만 본 수익률, <strong>총수익</strong>은 분배금을 전부(세전) 같은 ETF에 재투자했다고 본 수익률입니다. 둘의 차이가 클수록 수익을 분배금으로 많이 꺼내 준 상품이고, 가격 수익률이 마이너스면 원금(주가)이 줄어든 상태입니다. 행을 누르면 그 종목으로 생활비 대결을 엽니다.</p>
+      <div class="board-tools">
+        <span><span class="lbl">기간</span>
+          <span class="seg" id="bd-period"><button data-v="1" class="on">1년</button><button data-v="3">3년</button><button data-v="all">계산 가능한 전체</button></span></span>
+      </div>
+      <div class="board-tools" style="margin-top:10px;"><span class="lbl">기초자산</span><div class="chips" id="bd-group" style="margin-top:0;"></div></div>
+      <div class="board-tools" style="margin-top:6px;"><span class="lbl">세대</span><div class="chips" id="bd-gen" style="margin-top:0;"></div></div>
+      <div class="table-wrap">
+        <table class="data-table board-table" id="bd-table">
+          <thead><tr>
+            <th data-k="name">종목</th>
+            <th data-k="y12">12개월 분배율</th>
+            <th data-k="taxr">과세 비율</th>
+            <th data-k="price">가격 수익률</th>
+            <th data-k="total" class="sorted">총수익(세전 재투자)</th>
+            <th data-k="base">본주 총수익</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="input-hint" style="margin-top:12px;line-height:1.7;" id="bd-note"></p>
+    </div>
+
+    <div class="method-box">
+      <h3>세대 구분 기준</h3>
+      <ul>
+        <li>세대는 옵션을 파는 설계 방식 기준입니다. 공식 용어가 아니고, 세대가 높다고 수익률이나 분배율이 더 좋은 것도 아닙니다.</li>
+        <li>기초자산을 넓힌 것(채권·금·단일종목)과 분배 주기는 세대로 치지 않습니다. 운용 방식을 확인하는 중인 종목은 "분류 보류"로 둡니다.</li>
+      </ul>
+      <div class="gen-guide">
+        <div><b>1세대 · 배당 올인형</b>등가격(ATM) 콜을 100% 매도. 분배율이 가장 높고, 오를 때 거의 못 따라갑니다.</div>
+        <div><b>2세대 · 밸런스형</b>외가격(OTM)에 팔거나 매니저가 비중을 조절합니다.</div>
+        <div><b>2.5세대 · 부분 커버드콜</b>기초자산의 30~60%에만 옵션을 팝니다.</div>
+        <div><b>3세대 · 성장 극대화형</b>매도 비중 10~30% 고정 또는 위클리·데일리 초단기 옵션. 위클리·데일리면 타겟형이라도 3세대입니다.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="method-box" id="method">
+    <h3>계산 방법</h3>
+    <ul>
+      <li>종가는 다음금융 일별 시세(분배금을 반영하지 않은 원래 종가), 분배금·과세표준액은 ETF CHECK·FunETF 공시 자료를 씁니다. 네이버 수정주가와 대조해 빠진 분배금이 없는지 확인한 구간만 계산합니다.</li>
+      <li>분배락일 전날까지 가진 수량 × 주당 분배금을 받고, 재투자는 분배락일 종가에 합니다(실제 지급은 며칠 뒤). 소수 주까지 산다고 가정합니다.</li>
+      <li>일반계좌 분배금 세금은 운용사가 공시한 과세표준액 × 15.4%입니다. 커버드콜 분배금 중 과세되지 않는 부분(국내주식 옵션 매매차익 등)이 있으면 그만큼 세금이 줄어듭니다.</li>
+      <li>국내상장 해외 ETF 등(국내주식형 제외)을 팔 때는 (매도가 − 평균 단가) × 15.4%를 뗍니다. 실제로는 과세표준기준가로 계산하므로 차이가 날 수 있는 추정치입니다.</li>
+      <li>마지막 평가금액은 팔기 전 금액입니다. 매매 수수료, 금융소득종합과세(연 2,000만원 초과), 건강보험료(건보료), 연금계좌 인출 때 세금은 반영하지 않았습니다. 총보수는 ETF 가격에 이미 녹아 있습니다.</li>
+      <li>연환산 수익률은 넣은 돈·꺼낸 돈의 날짜를 모두 반영한 현금흐름 기준(XIRR)입니다.</li>
+    </ul>
+  </div>
+
+  <footer>
+    ※ 과거 실제 데이터로 계산한 결과이며, 미래 수익을 보장하지 않습니다. 상장 기간이 짧은 종목은 결과의 의미가 제한적입니다.<br>
+    분배금 세금(과세표준액 × 15.4%)과 국내상장 해외 ETF 매도차익 세금(추정)을 반영했고, 매매 수수료·금융소득종합과세·건보료는 반영하지 않았습니다. 특정 상품의 매수·매도 권유가 아닙니다.<br>
+    🔒 입력한 숫자는 이 브라우저 안에서만 계산되며, 서버로 보내거나 따로 저장하지 않습니다.<br>
+    <span id="foot-date"></span>
+  </footer>
+</div>
+
+<script>
+{{ENGINE}}
+</script>
+<script>
+{{APP}}
+</script>
+</body>
+</html>
