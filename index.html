@@ -807,6 +807,8 @@
       <li>국내상장 해외 ETF 등(국내주식형 제외)을 팔 때는 (매도가 − 평균 단가) × 15.4%를 뗍니다. 실제로는 과세표준기준가로 계산하므로 차이가 날 수 있는 추정치입니다.</li>
       <li>마지막 평가금액은 팔기 전 금액입니다. 매매 수수료, 금융소득종합과세(연 2,000만원 초과), 건강보험료(건보료), 연금계좌 인출 때 세금은 반영하지 않았습니다. 총보수는 ETF 가격에 이미 녹아 있습니다.</li>
       <li>연환산 수익률은 넣은 돈·꺼낸 돈의 날짜를 모두 반영한 현금흐름 기준(XIRR)입니다.</li>
+      <li>최대 낙폭(MDD)은 적립한 돈의 영향을 뺀 시간가중 기준으로, 가장 높았던 때에서 가장 많이 떨어진 비율입니다.</li>
+      <li>생활비 대결의 월평균 생활비는 분배가 없던 달까지 포함한 기간 전체 개월 수로 나눕니다.</li>
     </ul>
   </div>
 
@@ -1075,6 +1077,7 @@ function xirr(D, flows) {
   if (span < 0.08) return null;
   const npv = r => pts.reduce((s, [t, a]) => s + a / Math.pow(1 + r, t), 0);
   let lo = -0.99, hi = 10, flo = npv(lo), fhi = npv(hi);
+  while (flo * fhi > 0 && hi < 1e4) { hi *= 10; fhi = npv(hi); }   // 짧은 구간 급등 대비
   if (flo * fhi > 0) return null;
   for (let k = 0; k < 200; k++) {
     const mid = (lo + hi) / 2, f = npv(mid);
@@ -1138,7 +1141,9 @@ const charts = {};
 // ---------------- 포맷 ----------------
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 function won(n) {               // 1억 4,748만원
+  if (Math.abs(n) < 0.5) return '0원';
   const neg = n < 0; n = Math.abs(n);
+  if (n < 10000) return (neg ? '−' : '') + Math.round(n).toLocaleString() + '원';
   const man = Math.round(n / 10000);
   const eok = Math.floor(man / 10000), rest = man % 10000;
   let s;
@@ -1166,7 +1171,7 @@ const ymdDot = s => `${s.slice(2, 4)}.${s.slice(4, 6)}`;
 const nm = c => D.etfs[c] ? D.etfs[c].n : c;
 const signCls = v => v > 0 ? 'up' : v < 0 ? 'down' : '';
 
-function idxFromInput(v, fallback) {
+function idxFromInput(v, fallback, prev) {
   if (!v) return fallback;
   const s = v.replace(/-/g, '');
   const ds = D.dates;
@@ -1174,6 +1179,7 @@ function idxFromInput(v, fallback) {
   if (s <= ds[0]) return 0;
   if (s >= ds[hi]) return hi;
   while (lo < hi) { const mid = (lo + hi) >> 1; if (ds[mid] < s) lo = mid + 1; else hi = mid; }
+  if (prev && ds[lo] > s && lo > 0) return lo - 1;   // 종료일이 휴장일이면 직전 거래일
   return lo;
 }
 const startOf = codes => Math.max(...codes.filter(Boolean).map(c => D.etfs[c].s));
@@ -1244,7 +1250,7 @@ function setDateRange(prefix, codes, keep) {
   st.max = en.max = ymd(D.dates[last]);
   let si = keep ? idxFromInput(st.value, s) : s;
   if (si < s) si = s;
-  let ei = keep ? idxFromInput(en.value, last) : last;
+  let ei = keep ? idxFromInput(en.value, last, true) : last;
   if (ei > last) ei = last;
   if (ei <= si) { si = s; ei = last; }
   st.value = ymd(D.dates[si]); en.value = ymd(D.dates[ei]);
@@ -1349,15 +1355,15 @@ function readDuel() {
   const cc = $('d-cc').value, base = $('d-base').value;
   const last = D.dates.length - 1, s = startOf([cc, base]);
   let i0 = Math.max(s, idxFromInput($('d-start').value, s));
-  let i1 = Math.min(last, idxFromInput($('d-end').value, last));
+  let i1 = Math.min(last, idxFromInput($('d-end').value, last, true));
   if (i1 <= i0) { i0 = s; i1 = last; }
   return {
     cc, base, i0, i1,
     initial: Math.max(0, +$('d-initial').value || 0) * 10000,
     taxMode: radio('d-tax'),
     mode: radio('d-mode'),
-    rate: Math.min(30, Math.max(0.5, +$('d-rate').value || 4)),
-    leftover: ($('d-left').querySelector('.chip.on') || {}).dataset.v || 'reinvest',
+    rate: Math.min(30, Math.max(0.5, Number.isFinite(parseFloat($('d-rate').value)) ? parseFloat($('d-rate').value) : 4)),
+    leftover: radio('d-mode') === 'rate' ? (($('d-left').querySelector('.chip.on') || {}).dataset.v || 'reinvest') : 'reinvest',
   };
 }
 function runDuelUI() {
@@ -1372,7 +1378,18 @@ function runDuelUI() {
   const yrs = yearsBetween(o.i0, o.i1);
   const ccName = nm(o.cc), bName = nm(o.base);
   const xA = xirr(D, [...r.A.flows, [o.i1, vA]]), xB = xirr(D, [...r.B.flows, [o.i1, vB]]);
-  const months = r.mA.size;
+  const monthKeys = [...new Set(D.dates.slice(o.i0, o.i1 + 1).map(d => d.slice(0, 6)))];
+  const months = monthKeys.length;
+  // 지금 다 판다면 낼 매매차익 세금(추정) — 일반계좌 + 국내주식형이 아닌 ETF만
+  const gainTax = (acc, code) => {
+    if (o.taxMode !== 'general' || D.etfs[code].dom) return 0;
+    const q = acc.sh[code] || 0, p = priceAt(D, code, o.i1);
+    return q && p ? Math.max(0, q * p - (acc.cost[code] || 0)) * 0.154 : 0;
+  };
+  const gA = gainTax(r.A, o.cc), gB = gainTax(r.B, o.base);
+  const gainNote = (gA > 0 || gB > 0)
+    ? `<span class="lump-note">남은 자산은 팔기 전 평가금액입니다. 지금 모두 판다면 매매차익 세금(추정)이 커버드콜 <strong>${won(gA)}</strong>, 본주 <strong>${won(gB)}</strong> 더 붙고, 이걸 빼면 남은 자산 차이(본주 − 커버드콜)는 <strong>${won((vB - gB) - (vA - gA))}</strong>입니다.</span>`
+    : '';
 
   // 판정
   $('d-verdict-label').textContent = `${ymd(D.dates[o.i0])} ~ ${ymd(D.dates[o.i1])} · ${yrText(yrs)} · ${o.taxMode === 'general' ? '일반계좌' : '절세계좌'}`;
@@ -1381,15 +1398,15 @@ function runDuelUI() {
     $('d-verdict-main').innerHTML = `똑같이 <span class="hl">${won(r.A.spent)}</span>을 생활비로 쓴 뒤,<br>`
       + (Math.abs(diff) < 1 ? '두 사람에게 남은 돈은 거의 같습니다.'
         : `<span class="hl">${diff > 0 ? '본주' : '커버드콜'}</span> 쪽이 <span class="hl">${won(Math.abs(diff))}</span> 더 남았습니다.`);
-    $('d-verdict-sub').innerHTML = `커버드콜은 분배금(세후)만으로, 본주는 같은 날 같은 금액을 꺼내 썼습니다. 처음 넣은 돈은 둘 다 <strong>${won(o.initial)}</strong>입니다.`;
+    $('d-verdict-sub').innerHTML = `커버드콜은 분배금(세후)만으로, 본주는 같은 날 같은 금액을 꺼내 썼습니다. 처음 넣은 돈은 둘 다 <strong>${won(o.initial)}</strong>입니다.` + gainNote;
   } else {
     const tA = vA + r.A.spent, tB = vB + r.B.spent, diff = tB - tA;
     $('d-verdict-main').innerHTML = `쓴 생활비 <span class="hl">${won(r.A.spent)}</span> vs <span class="hl">${won(r.B.spent)}</span><br>`
       + `남은 자산까지 합치면 <span class="hl">${diff >= 0 ? '본주' : '커버드콜'}</span> 쪽이 <span class="hl">${won(Math.abs(diff))}</span> 많습니다.`;
-    $('d-verdict-sub').innerHTML = `커버드콜은 분배금(세후)을 전부 생활비로, 본주는 매년 평가금액의 <strong>${o.rate}%</strong>를 매달 나눠 꺼냈습니다. 처음 넣은 돈은 둘 다 <strong>${won(o.initial)}</strong>입니다.`;
+    $('d-verdict-sub').innerHTML = `커버드콜은 분배금(세후)을 전부 생활비로, 본주는 매년 평가금액의 <strong>${o.rate}%</strong>를 매달 나눠 꺼냈습니다. 처음 넣은 돈은 둘 다 <strong>${won(o.initial)}</strong>입니다.` + gainNote;
   }
 
-  const card = (cls, who, name, acc, v, x, extra) => `
+  const card = (cls, who, name, acc, v, x, extra, g) => `
     <div class="vs-card ${cls}">
       <div class="vs-who">${who}</div>
       <div class="vs-name">${esc(name)}</div>
@@ -1397,13 +1414,14 @@ function runDuelUI() {
       <div class="vs-line"><span>쓴 생활비 누계</span><b>${won(acc.spent)}</b></div>
       <div class="vs-line"><span>남은 자산 + 쓴 생활비</span><b>${won(v + acc.spent)}</b></div>
       <div class="vs-line"><span>낸 세금</span><b>${won(acc.tax)}</b></div>
+      ${g > 0 ? `<div class="vs-line"><span>지금 팔면 낼 세금 (추정)</span><b>${won(g)}</b></div>` : ''}
       <div class="vs-line"><span>연환산 수익률 (생활비 포함)</span><b class="${signCls(x)}">${x == null ? '—' : pctS(x)}</b></div>
       ${extra || ''}
     </div>`;
   const dep = r.B.depletedAt != null ? `<span class="skull">💀 ${ymd(D.dates[r.B.depletedAt])}에 자산 소진</span>` : '';
   $('d-vs').innerHTML = card('a', '커버드콜 · 분배금으로 생활', ccName, r.A, vA, xA,
-    `<div class="vs-line"><span>월평균 생활비</span><b>${won(r.A.spent / Math.max(1, months))}</b></div>`)
-    + card('b', o.mode === 'match' ? '본주 · 같은 금액을 팔아서 생활' : `본주 · 매년 ${o.rate}% 꺼내서 생활`, bName, r.B, vB, xB, dep);
+    `<div class="vs-line"><span>월평균 생활비 (${months}개월)</span><b>${won(r.A.spent / Math.max(1, months))}</b></div>`, gA)
+    + card('b', o.mode === 'match' ? '본주 · 같은 금액을 팔아서 생활' : `본주 · 매년 ${o.rate}% 꺼내서 생활`, bName, r.B, vB, xB, dep, gB);
 
   // 차트 1
   const labels = D.dates.slice(o.i0, o.i1 + 1);
@@ -1419,7 +1437,7 @@ function runDuelUI() {
   ], log);
 
   // 차트 2: 월별 생활비
-  const keys = [...new Set([...r.mA.keys(), ...r.mB.keys()])].sort();
+  const keys = monthKeys;
   const ds2 = [{ label: '커버드콜 분배금(세후)', data: keys.map(k => r.mA.get(k) || 0), backgroundColor: '#D9542B' }];
   if (o.mode === 'rate') ds2.push({ label: '본주에서 꺼낸 생활비', data: keys.map(k => r.mB.get(k) || 0), backgroundColor: '#C4A57B' });
   $('d-c2-sub').textContent = o.mode === 'rate'
@@ -1466,7 +1484,7 @@ function readBt() {
   const target = policy === 'other' ? $('b-target').value : null;
   const last = D.dates.length - 1, s = startOf([cc, cmp, target]);
   let i0 = Math.max(s, idxFromInput($('b-start').value, s));
-  let i1 = Math.min(last, idxFromInput($('b-end').value, last));
+  let i1 = Math.min(last, idxFromInput($('b-end').value, last, true));
   if (i1 <= i0) { i0 = s; i1 = last; }
   return {
     cc, cmp, policy, target, i0, i1,
@@ -1484,7 +1502,15 @@ function runBtUI() {
   const vA = r.A.value(o.i1), vB = r.B.value(o.i1);
   const yrs = yearsBetween(o.i0, o.i1);
   const xA = xirr(D, [...r.A.flows, [o.i1, vA]]), xB = xirr(D, [...r.B.flows, [o.i1, vB]]);
-  const mA = mdd(r.sA.map((v, k) => v + (o.policy === 'spend' ? r.sSpentA[k] : 0))), mB = mdd(r.sB);
+  const twIndex = (vals, inv) => {   // 넣은 돈의 영향을 뺀 시간가중 지수
+    const out = [1];
+    for (let k = 1; k < vals.length; k++) {
+      const prev = vals[k - 1], flow = inv[k] - inv[k - 1];
+      out.push(prev > 0 ? out[k - 1] * (vals[k] - flow) / prev : out[k - 1]);
+    }
+    return out;
+  };
+  const mA = mdd(twIndex(r.sA.map((v, k) => v + (o.policy === 'spend' ? r.sSpentA[k] : 0)), r.sInv)), mB = mdd(twIndex(r.sB, r.sInv));
   const ccName = nm(o.cc), cmpName = nm(o.cmp);
   const stratName = `${ccName} · ${POLICY_TEXT[o.policy]}${o.policy === 'other' ? `(${nm(o.target)})` : ''}`;
   const totA = vA + r.A.spent;
@@ -1528,6 +1554,7 @@ function runBtUI() {
     pd = sn.div; pt = sn.tax;
   });
   $('b-table').querySelector('tbody').innerHTML = rows.join('');
+  $('b-table').querySelectorAll('th')[2].textContent = o.policy === 'spend' ? '내 전략 연말 자산 + 쓴 생활비' : '내 전략 연말 자산';
 
   // 인사이트
   const tr = totalReturn(D, o.cc, o.i0, o.i1);
@@ -1575,14 +1602,15 @@ function boardRows() {
     const has12 = yearsBetween(e.s, last) >= 0.98;
     const p = priceAt(D, c, last);
     const tr = i0 != null ? totalReturn(D, c, i0, last) : null;
+    const hasBase = !!(BASE_BY_CODE[c] || BASE_BY_GROUP[e.grp]);
     const b = baseFor(c);
-    const bt = i0 != null && D.etfs[b] && i0 >= D.etfs[b].s ? totalReturn(D, b, i0, last) : null;
+    const bt = hasBase && i0 != null && D.etfs[b] && i0 >= D.etfs[b].s ? totalReturn(D, b, i0, last) : null;
     out.push({
       c, e, gen: GEN[c] || 'x', i0,
       y12: has12 ? t12.d / p : null, taxr: has12 && t12.d > 0 ? t12.t / t12.d : null,
       taxrPart: !has12 && t12.d > 0 ? t12.t / t12.d : null,
       price: tr ? tr.price : null, total: tr ? tr.total : null,
-      base: bt ? bt.total : null, baseCode: (BASE_BY_CODE[c] || BASE_BY_GROUP[e.grp]) ? b : null,
+      base: bt ? bt.total : null, baseCode: hasBase ? b : null,
     });
   }
   return out;

@@ -254,6 +254,7 @@ function xirr(D, flows) {
   if (span < 0.08) return null;
   const npv = r => pts.reduce((s, [t, a]) => s + a / Math.pow(1 + r, t), 0);
   let lo = -0.99, hi = 10, flo = npv(lo), fhi = npv(hi);
+  while (flo * fhi > 0 && hi < 1e4) { hi *= 10; fhi = npv(hi); }   // 짧은 구간 급등 대비
   if (flo * fhi > 0) return null;
   for (let k = 0; k < 200; k++) {
     const mid = (lo + hi) / 2, f = npv(mid);
