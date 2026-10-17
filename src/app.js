@@ -569,12 +569,18 @@ function syncHash() {
 function applyHash() {
   const h = decodeURIComponent(location.hash.slice(1)).toUpperCase();
   if (!h) return false;
-  if (h === 'BOARD') { showTab('board'); return true; }
+  if (h === 'BOARD') {
+    // 멤버십: 잠겨 있으면 현황판 대신 생활비 대결로 열고 안내만 띄운다
+    if (window.TJLock && TJLock.locked()) { TJLock.prompt('현황판'); syncHash(); return false; }
+    showTab('board'); return true;
+  }
   const [code, tab] = h.split('-');
   if (!D.etfs[code] || D.etfs[code].kind !== 'cc') return false;
   hashLock = true;
   selectCC(code);
   hashLock = false;
+  // 멤버십: 잠겨 있으면 백테스트 대신 생활비 대결로 (종목 선택은 그대로)
+  if (tab === 'BT' && window.TJLock && TJLock.locked()) { showTab('duel'); TJLock.prompt('재투자 백테스트'); return true; }
   showTab(tab === 'BT' ? 'bt' : 'duel');
   return true;
 }
@@ -603,7 +609,11 @@ function bind() {
   });
   $('d-base').addEventListener('change', () => { setDateRange('d', [$('d-cc').value, $('d-base').value], true); runDuelUI(); });
   ['d-start', 'd-end', 'd-rate'].forEach(id => $(id).addEventListener('change', runDuelUI));
-  document.querySelectorAll('input[name="d-tax"],input[name="d-mode"]').forEach(x => x.addEventListener('change', () => { syncRadios(); runDuelUI(); }));
+  document.querySelectorAll('input[name="d-tax"],input[name="d-mode"]').forEach(x => x.addEventListener('change', () => {
+    // 멤버십: 키보드 등으로 정률을 고른 경우에도 막고 같은 금액으로 되돌린다
+    if (x.name === 'd-mode' && x.value === 'rate' && x.checked && window.TJLock && !TJLock.allow('정률 인출')) document.querySelector('input[name="d-mode"][value="match"]').checked = true;
+    syncRadios(); runDuelUI();
+  }));
   $('d-left').addEventListener('click', ev => {
     const b = ev.target.closest('.chip'); if (!b) return;
     $('d-left').querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x === b)); runDuelUI();
