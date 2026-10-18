@@ -1185,7 +1185,8 @@ function finWarnHTML(byYear) {
   const top = over.reduce((a, y) => (byYear[y] > byYear[a] ? y : a), over[0]);
   return `<br><span class="tag-mini" style="margin-left:0;">금융소득종합과세 대상</span> `
     + `${over.length === 1 ? `${top}년` : `${over[0]}~${over[over.length - 1]}년 중 ${over.length}개 해`} 과세 분배금·매도차익이 연 2,000만원을 넘습니다`
-    + ` (최대 ${top}년 ${won(byYear[top])}). 이 계산은 15.4%만 반영해, 다른 소득에 따라 세금이 더 나오고 건보료도 늘 수 있습니다.`;
+    + ` (최대 ${top}년 ${won(byYear[top])}). 이 계산은 15.4%만 반영해, 다른 소득에 따라 세금이 더 나오고 건보료도 늘 수 있습니다.`
+    + ' 매도차익은 시장가 기준 추정이라, 실제로는 과세표준기준가 상승분까지만 잡혀 이보다 작을 수 있습니다.';
 }
 const nm = c => D.etfs[c] ? D.etfs[c].n : c;
 const signCls = v => v > 0 ? 'up' : v < 0 ? 'down' : '';
