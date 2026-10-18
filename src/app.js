@@ -405,7 +405,8 @@ function runBtUI() {
     }
     return out;
   };
-  const mA = mdd(twIndex(r.sA.map((v, k) => v + (o.policy === 'spend' ? r.sSpentA[k] : 0)), r.sInv)), mB = mdd(twIndex(r.sB, r.sInv));
+  // MDD는 두 쪽 모두 계좌 잔고 기준 (생활비로 꺼내 쓴 돈은 더하지 않는다)
+  const mA = mdd(twIndex(r.sA, r.sInv)), mB = mdd(twIndex(r.sB, r.sInv));
   const ccName = nm(o.cc), cmpName = nm(o.cmp);
   const stratName = `${ccName} · ${POLICY_TEXT[o.policy]}${o.policy === 'other' ? `(${nm(o.target)})` : ''}`;
   const totA = vA + r.A.spent;
@@ -421,7 +422,7 @@ function runBtUI() {
     st('accent', '내 전략 최종 금액', won(totA), o.policy === 'spend' ? `남은 자산 ${won(vA)} + 쓴 생활비` : '팔기 전 평가금액')
     + st('', '비교 대상 최종 금액', won(vB), esc(cmpName) + ' · 분배금 재투자')
     + st('', '연환산 수익률 (XIRR)', `<span class="${signCls(xA)}">${xA == null ? '—' : pctS(xA)}</span>`, `비교 대상 ${xB == null ? '—' : pctS(xB)}`)
-    + st('', '최대 낙폭 (MDD)', `<span class="down">${pctS(mA)}</span>`, `비교 대상 ${pctS(mB)}`)
+    + st('', o.policy === 'spend' ? '최대 낙폭 (MDD · 계좌 잔고 기준)' : '최대 낙폭 (MDD)', `<span class="down">${pctS(mA)}</span>`, o.policy === 'spend' ? `비교 대상 ${pctS(mB)} · 둘 다 쓴 생활비 제외` : `비교 대상 ${pctS(mB)}`)
     + st('', '받은 분배금 (세후)', won(r.A.divNet), `세전 ${won(r.A.divGross)}`)
     + st('', '낸 세금', won(r.A.tax), o.taxMode === 'general' ? `비교 대상 ${won(r.B.tax)}` : '절세계좌 가정')
     + st('', '넣은 돈', won(r.A.invested), o.monthly > 0 ? `초기 ${won(o.initial)} + 월 ${won(o.monthly)}` : '거치식')
