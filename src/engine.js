@@ -46,6 +46,7 @@ function Account(D, opt) {
   this.divGross = 0; // 받은 분배금(세전) 누계
   this.divNet = 0;   // 받은 분배금(세후) 누계
   this.flows = [];   // XIRR용 [i, 금액(+면 내 손에 들어온 돈)]
+  this.finByYear = {}; // 연도(YYYY) -> 과세되는 금융소득(분배금 과세표준액 + 해외 ETF 매도차익) — 연 2,000만원 종합과세 판정용
   this.depletedAt = null;
 }
 Account.prototype.buy = function (code, amt, i) {
@@ -76,6 +77,7 @@ Account.prototype.sellNet = function (code, net, i) {
   if (gross > q * p) gross = q * p;
   const sellQ = gross / p;
   const t = gross * TAX * gainRate;
+  if (t > 0) this.addFin(i, gross * gainRate);
   this.cost[code] -= avg * sellQ;
   this.sh[code] = q - sellQ;
   if (this.sh[code] < 1e-9) { this.sh[code] = 0; this.cost[code] = 0; }
@@ -92,12 +94,17 @@ Account.prototype.collect = function (i) {
     if (!r) continue;
     const gross = q * r[1];
     const t = this.general ? q * r[2] * TAX : 0;
+    if (this.general) this.addFin(i, q * r[2]);
     this.tax += t;
     this.divGross += gross;
     this.divNet += gross - t;
     got[c] = gross - t;
   }
   return got;
+};
+Account.prototype.addFin = function (i, amt) {
+  const y = this.D.dates[i].slice(0, 4);
+  this.finByYear[y] = (this.finByYear[y] || 0) + amt;
 };
 Account.prototype.contribute = function (code, amt, i) {
   if (amt <= 0) return;

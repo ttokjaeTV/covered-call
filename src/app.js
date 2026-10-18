@@ -63,6 +63,17 @@ const pctS = (v, d = 1) => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v * 100
 const pct2 = v => (v * 100).toFixed(2) + '%';
 const ymd = s => `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
 const ymdDot = s => `${s.slice(2, 4)}.${s.slice(4, 6)}`;
+/* 일반계좌에서 한 해 과세 금융소득(분배금 과세표준액 + 해외 ETF 매도차익)이 2,000만원을 넘으면 종합과세 경고.
+   이 계산기는 15.4%만 반영하므로, 넘는 해를 알려 준다 (다른 금융소득·종합소득은 모름) */
+const FIN_COMP_LINE = 20000000;
+function finWarnHTML(byYear) {
+  const over = Object.keys(byYear || {}).sort().filter(y => byYear[y] > FIN_COMP_LINE);
+  if (!over.length) return '';
+  const top = over.reduce((a, y) => (byYear[y] > byYear[a] ? y : a), over[0]);
+  return `<br><span class="tag-mini" style="margin-left:0;">금융소득종합과세 대상</span> `
+    + `${over.length === 1 ? `${top}년` : `${over[0]}~${over[over.length - 1]}년 중 ${over.length}개 해`} 과세 분배금·매도차익이 연 2,000만원을 넘습니다`
+    + ` (최대 ${top}년 ${won(byYear[top])}). 이 계산은 15.4%만 반영해, 다른 소득에 따라 세금이 더 나오고 건보료도 늘 수 있습니다.`;
+}
 const nm = c => D.etfs[c] ? D.etfs[c].n : c;
 const signCls = v => v > 0 ? 'up' : v < 0 ? 'down' : '';
 
@@ -415,13 +426,15 @@ function runBtUI() {
     + `<br>같은 돈을 ${esc(cmpName)}에 넣었다면 <span class="hl">${won(vB)}</span>`;
   $('b-verdict-sub').innerHTML = `${ymd(D.dates[o.i0])} ~ ${ymd(D.dates[o.i1])} · ${yrText(yrs)} · ${o.taxMode === 'general' ? '일반계좌' : '절세계좌'} · ${esc(POLICY_TEXT[o.policy])}`
     + (o.policy === 'spend' ? `<br>내 전략 금액에는 생활비로 쓴 <strong>${won(r.A.spent)}</strong>이 포함돼 있습니다.` : '')
-    + (o.policy === 'cash' ? `<br>내 전략 금액에는 쌓아 둔 현금 <strong>${won(r.A.cash)}</strong>이 포함돼 있습니다.` : '');
+    + (o.policy === 'cash' ? `<br>내 전략 금액에는 쌓아 둔 현금 <strong>${won(r.A.cash)}</strong>이 포함돼 있습니다.` : '')
+    + finWarnHTML(r.A.finByYear);
 
   const st = (cls, label, value, sub) => `<div class="stat-card ${cls}"><div class="stat-label">${label}</div><div class="stat-value">${value}</div><div class="stat-sub">${sub}</div></div>`;
   $('b-stats').innerHTML =
     st('accent', '내 전략 최종 금액', won(totA), o.policy === 'spend' ? `남은 자산 ${won(vA)} + 쓴 생활비` : '팔기 전 평가금액')
     + st('', '비교 대상 최종 금액', won(vB), esc(cmpName) + ' · 분배금 재투자')
-    + st('', '연환산 수익률 (XIRR)', `<span class="${signCls(xA)}">${xA == null ? '—' : pctS(xA)}</span>`, `비교 대상 ${xB == null ? '—' : pctS(xB)}`)
+    + st('', '연환산 수익률 (XIRR)', `<span class="${signCls(xA)}">${xA == null ? '—' : pctS(xA)}</span>`, `비교 대상 ${xB == null ? '—' : pctS(xB)}`
+      + (o.policy === 'spend' ? '<br>생활비는 받은 날 돌려받은 돈으로 계산해, 최종 금액이 같아도 ‘현금으로 보유’보다 높게 나옵니다' : ''))
     + st('', o.policy === 'spend' ? '최대 낙폭 (MDD · 계좌 잔고 기준)' : '최대 낙폭 (MDD)', `<span class="down">${pctS(mA)}</span>`, o.policy === 'spend' ? `비교 대상 ${pctS(mB)} · 둘 다 쓴 생활비 제외` : `비교 대상 ${pctS(mB)}`)
     + st('', '받은 분배금 (세후)', won(r.A.divNet), `세전 ${won(r.A.divGross)}`)
     + st('', '낸 세금', won(r.A.tax), o.taxMode === 'general' ? `비교 대상 ${won(r.B.tax)}` : '절세계좌 가정')
@@ -530,13 +543,15 @@ function renderBoard() {
     const g = r.gen === 'x' ? '<span class="gen gx">분류 보류</span>' : `<span class="gen ${GEN_CLS[r.gen]}">${GEN_LABEL[r.gen]}</span>`;
     const from = r.i0 != null ? `<span class="cell-sub">${ymd(D.dates[r.i0])}부터</span>` : '';
     const na = `<span class="muted">${per === 'all' ? '—' : '상장 기간 부족'}</span>`;
-    const gap = r.total != null && r.price != null ? r.total - r.price : null;
+    // 분배금 몫 = 화면에 보이는(소수 첫째 자리로 반올림한) 총수익 − 가격 수익률 → 두 칸을 더하면 총수익과 정확히 맞는다
+    const shown = v => Math.sign(v) * Number(Math.abs(v * 100).toFixed(1));
+    const gap = r.total != null && r.price != null ? shown(r.total) - shown(r.price) : null;
     return `<tr data-c="${r.c}">
       <td><span class="b-name">${esc(r.e.n)}</span><span class="b-meta">${g}${esc(GROUP_NAME[r.e.grp] || r.e.grp)} · 상장 ${esc(r.e.list || '-')}</span></td>
       <td>${r.y12 != null ? pct2(r.y12) : '<span class="muted">1년 미만</span>'}</td>
       <td>${r.taxr != null ? Math.round(r.taxr * 100) + '%' : r.taxrPart != null ? `<span class="muted">${Math.round(r.taxrPart * 100)}%</span><span class="cell-sub">상장 후 전체</span>` : '—'}</td>
       <td>${r.price != null ? `<span class="${signCls(r.price)}">${pctS(r.price)}</span>${from}` : na}</td>
-      <td>${r.total != null ? `<span class="${signCls(r.total)}">${pctS(r.total)}</span>${gap != null ? `<span class="cell-sub">분배금 몫 ${(gap * 100).toFixed(1)}%p</span>` : ''}` : na}</td>
+      <td>${r.total != null ? `<span class="${signCls(r.total)}">${pctS(r.total)}</span>${gap != null ? `<span class="cell-sub">분배금 몫 ${gap.toFixed(1)}%p</span>` : ''}` : na}</td>
       <td>${r.base != null ? `<span class="${signCls(r.base)}">${pctS(r.base)}</span><span class="cell-sub">${esc(nm(r.baseCode))}</span>` : '<span class="muted">—</span>'}</td>
     </tr>`;
   }).join('');
