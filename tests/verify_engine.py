@@ -128,9 +128,11 @@ def duel(cc, base, i0, i1, initial, general, mode, rate, leftover):
         else:
             if year_start(i, i0):
                 budget = B.val(i) * rate / 100
-            if month_start(i, i0):
+            # 시작일도 그 달 인출일(예산은 시작일 평가금액 기준)
+            pay_day = i == i0 or month_start(i, i0)
+            if pay_day:
                 pay(budget / 12)
-            trig = month_start(i, i0)
+            trig = pay_day
         if B.cash > 0 and trig:
             v, B.cash = B.cash, 0
             if leftover == "spend":

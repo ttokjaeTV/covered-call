@@ -205,14 +205,16 @@ function runDuel(D, opt) {
       budgetB = opt.initial * (opt.rate || 0) / 100;
     }
 
+    // 정률 인출일: 시작일(그 달 첫 인출, 예산은 위에서 시작일 평가금액으로) + 이후 매달 첫 거래일
+    const payDay = i === opt.i0 || isMonthStart(D, i, opt.i0);
     if (opt.mode === 'match') {
       if (spendA > 0) payB(spendA, i);
     } else {
       if (isYearStart(D, i, opt.i0)) budgetB = B.value(i) * opt.rate / 100;
-      if (isMonthStart(D, i, opt.i0)) payB(budgetB / 12, i);
+      if (payDay) payB(budgetB / 12, i);
     }
     // 인출하고 남은 본주 분배금
-    if (B.cash > 0 && (opt.mode === 'match' ? spendA > 0 : isMonthStart(D, i, opt.i0))) {
+    if (B.cash > 0 && (opt.mode === 'match' ? spendA > 0 : payDay)) {
       if (opt.leftover === 'spend') { const v = B.cash; B.cash = 0; B.spend(v, i); addM(mB, i, v); }
       else { const v = B.cash; B.cash = 0; B.buy(opt.base, v, i); }
     }
