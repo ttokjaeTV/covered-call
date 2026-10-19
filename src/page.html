@@ -10,6 +10,7 @@
 <meta property="og:description" content="높은 분배금, 정말 남는 장사일까? 국내상장 커버드콜 ETF 실제 데이터로 생활비 대결·재투자 백테스트.">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
 <script src="https://ttokjaetv.github.io/rules/v2026.1/rules.js"></script>
+<script src="https://ttokjaetv.github.io/rules/fill-v1.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 {{CSS}}
@@ -133,7 +134,7 @@
         <div class="sub-card">
           <div class="sub-card-title">계좌</div>
           <div class="radio-row">
-            <label class="radio-opt on"><input type="radio" name="d-tax" value="general" checked><span><span class="ro-title">일반계좌</span><span class="ro-desc" style="display:block;">분배금 세금(과세표준액 × 15.4%)을 떼고, 국내상장 해외 ETF를 팔 때 차익 세금(추정)도 뗍니다</span></span></label>
+            <label class="radio-opt on"><input type="radio" name="d-tax" value="general" checked><span><span class="ro-title">일반계좌</span><span class="ro-desc" style="display:block;">분배금 세금(과세표준액 × <span data-rule="FIN_INCOME.withholdingWithLocal*100">15.4</span>%)을 떼고, 국내상장 해외 ETF를 팔 때 차익 세금(추정)도 뗍니다</span></span></label>
             <label class="radio-opt"><input type="radio" name="d-tax" value="shelter"><span><span class="ro-title">연금저축·IRP·ISA 같은 절세계좌</span><span class="ro-desc" style="display:block;">운용 중 세금 없이 계산합니다(과세이연). 꺼낼 때 내는 세금은 반영하지 않습니다</span></span></label>
           </div>
         </div>
@@ -285,7 +286,7 @@
       <div class="sub-card" style="margin-top:6px;">
         <div class="sub-card-title">계좌</div>
         <div class="radio-row h">
-          <label class="radio-opt on"><input type="radio" name="b-tax" value="general" checked><span><span class="ro-title">일반계좌</span><span class="ro-desc" style="display:block;">분배금 세금 = 과세표준액 × 15.4%</span></span></label>
+          <label class="radio-opt on"><input type="radio" name="b-tax" value="general" checked><span><span class="ro-title">일반계좌</span><span class="ro-desc" style="display:block;">분배금 세금 = 과세표준액 × <span data-rule="FIN_INCOME.withholdingWithLocal*100">15.4</span>%</span></span></label>
           <label class="radio-opt"><input type="radio" name="b-tax" value="shelter"><span><span class="ro-title">절세계좌(세금 없이)</span><span class="ro-desc" style="display:block;">연금저축·IRP·ISA처럼 운용 중 세금을 떼지 않는 경우</span></span></label>
         </div>
       </div>
@@ -382,9 +383,9 @@
     <ul>
       <li>종가는 다음금융 일별 시세(분배금을 반영하지 않은 원래 종가), 분배금·과세표준액은 ETF CHECK·FunETF 공시 자료를 씁니다. 네이버 수정주가와 대조해 빠진 분배금이 없는지 확인한 구간만 계산합니다.</li>
       <li>분배락일 전날까지 가진 수량 × 주당 분배금을 받고, 재투자는 분배락일 종가에 합니다(실제 지급은 며칠 뒤). 소수 주까지 산다고 가정합니다.</li>
-      <li>일반계좌 분배금 세금은 운용사가 공시한 과세표준액 × 15.4%입니다. 커버드콜 분배금 중 과세되지 않는 부분(국내주식 옵션 매매차익 등)이 있으면 그만큼 세금이 줄어듭니다.</li>
-      <li>국내상장 해외 ETF 등(국내주식형 제외)을 팔 때는 (매도가 − 평균 단가) × 15.4%를 뗍니다. 실제로는 과세표준기준가로 계산하므로 차이가 날 수 있는 추정치입니다.</li>
-      <li>마지막 평가금액은 팔기 전 금액입니다. 매매 수수료, 금융소득종합과세(연 2,000만원 초과), 건강보험료(건보료), 연금계좌 인출 때 세금은 반영하지 않았습니다. 총보수는 ETF 가격에 이미 녹아 있습니다.</li>
+      <li>일반계좌 분배금 세금은 운용사가 공시한 과세표준액 × <span data-rule="FIN_INCOME.withholdingWithLocal*100">15.4</span>%입니다. 커버드콜 분배금 중 과세되지 않는 부분(국내주식 옵션 매매차익 등)이 있으면 그만큼 세금이 줄어듭니다.</li>
+      <li>국내상장 해외 ETF 등(국내주식형 제외)을 팔 때는 (매도가 − 평균 단가) × <span data-rule="FIN_INCOME.withholdingWithLocal*100">15.4</span>%를 뗍니다. 실제로는 과세표준기준가로 계산하므로 차이가 날 수 있는 추정치입니다.</li>
+      <li>마지막 평가금액은 팔기 전 금액입니다. 매매 수수료, 금융소득종합과세(연 <span data-rule="FIN_INCOME.threshold/1e4">2,000</span>만원 초과), 건강보험료(건보료), 연금계좌 인출 때 세금은 반영하지 않았습니다. 총보수는 ETF 가격에 이미 녹아 있습니다.</li>
       <li>연환산 수익률은 넣은 돈·꺼낸 돈의 날짜를 모두 반영한 현금흐름 기준(XIRR)입니다. 분배금을 생활비로 쓰면 받은 날 돈을 돌려받은 것으로 보기 때문에, 최종 금액이 '현금으로 보유'와 같아도 일찍 받은 돈의 시간 가치만큼 연환산 수익률이 더 높게 나옵니다.</li>
       <li>최대 낙폭(MDD)은 적립한 돈의 영향을 뺀 시간가중 기준으로, 가장 높았던 때에서 가장 많이 떨어진 비율입니다. 분배금을 생활비로 쓰는 경우에도 꺼내 쓴 생활비는 더하지 않고 계좌에 남은 잔고 기준으로 계산하며, 비교 대상도 같은 계좌 잔고 기준입니다.</li>
       <li>생활비 대결의 월평균 생활비는 분배가 없던 달까지 포함한 기간 전체 개월 수로 나눕니다.</li>
@@ -393,7 +394,7 @@
 
   <footer>
     ※ 과거 실제 데이터로 계산한 결과이며, 미래 수익을 보장하지 않습니다. 상장 기간이 짧은 종목은 결과의 의미가 제한적입니다.<br>
-    분배금 세금(과세표준액 × 15.4%)과 국내상장 해외 ETF 매도차익 세금(추정)을 반영했고, 매매 수수료·금융소득종합과세·건보료는 반영하지 않았습니다. 특정 상품의 매수·매도 권유가 아닙니다.<br>
+    분배금 세금(과세표준액 × <span data-rule="FIN_INCOME.withholdingWithLocal*100">15.4</span>%)과 국내상장 해외 ETF 매도차익 세금(추정)을 반영했고, 매매 수수료·금융소득종합과세·건보료는 반영하지 않았습니다. 특정 상품의 매수·매도 권유가 아닙니다.<br>
     🔒 입력한 숫자는 이 브라우저 안에서만 계산되며, 서버로 보내거나 따로 저장하지 않습니다.<br>
     <span id="foot-date"></span>
   </footer>
