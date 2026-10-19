@@ -9,6 +9,7 @@
 <meta property="og:title" content="커버드콜 계산기 · 똑재TV">
 <meta property="og:description" content="높은 분배금, 정말 남는 장사일까? 국내상장 커버드콜 ETF 실제 데이터로 생활비 대결·재투자 백테스트.">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<script src="https://ttokjaetv.github.io/rules/v2026.1/rules.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 
@@ -822,6 +823,12 @@
 </div>
 
 <script>
+if (!window.TTOKJAE_RULES) {
+  var TJR_MSG = '기준값 파일(rules.js)을 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 새로고침해 주세요.';
+  var tjrShow = function () { document.body.insertAdjacentHTML('afterbegin', '<div role="alert" style="background:#fdecea;color:#b3261e;padding:12px 16px;text-align:center;font-weight:600">' + TJR_MSG + '</div>'); };
+  document.body ? tjrShow() : document.addEventListener('DOMContentLoaded', tjrShow);
+  throw new Error(TJR_MSG);
+}
 // ==ENGINE START==
 /* 커버드콜 계산기 엔진
  * 데이터: cc-data.json (dates: 거래일 YYYYMMDD, etfs[code] = {s, px[], dv:[[i, 분배금, 과표, est?]], dom, ...})
@@ -832,7 +839,7 @@
  *              국내상장 해외 ETF 등(국내주식형 제외)을 팔면 (매도가 − 평균 단가) × 15.4% (추정)
  *  - 절세계좌: 세금 없음(과세이연)
  */
-const TAX = 0.154;
+const TAX = TTOKJAE_RULES.FIN_INCOME.withholdingWithLocal;   // 15.4% — 공용 제도 상수(rules.js), 브라우저·Node 모두 전역 TTOKJAE_RULES
 
 function makeData(raw) {
   const D = { dates: raw.dates, etfs: raw.etfs, divAt: {} };
@@ -1118,6 +1125,10 @@ if (typeof module !== 'undefined') {
  * 커버드콜 계산기 화면
  * ============================================================ */
 const DATA_URL = 'data/cc-data.json';
+// 공용 제도 상수(rules.js). 세율 % 글자·만원 글자는 아래 두 함수로 만든다
+const TR = TTOKJAE_RULES;
+const trPct = r => String(+(r * 100).toFixed(4));          // 0.154 → '15.4'
+const trMan = v => (v / 1e4).toLocaleString('ko-KR');      // 20000000 → '2,000'
 
 // 기초자산 묶음 (트래커 분류 → 화면 이름)
 const GROUPS = [
@@ -1180,14 +1191,14 @@ const ymd = s => `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
 const ymdDot = s => `${s.slice(2, 4)}.${s.slice(4, 6)}`;
 /* 일반계좌에서 한 해 과세 금융소득(분배금 과세표준액 + 해외 ETF 매도차익)이 2,000만원을 넘으면 종합과세 경고.
    이 계산기는 15.4%만 반영하므로, 넘는 해를 알려 준다 (다른 금융소득·종합소득은 모름) */
-const FIN_COMP_LINE = 20000000;
+const FIN_COMP_LINE = TR.FIN_INCOME.threshold;
 function finWarnHTML(byYear) {
   const over = Object.keys(byYear || {}).sort().filter(y => byYear[y] > FIN_COMP_LINE);
   if (!over.length) return '';
   const top = over.reduce((a, y) => (byYear[y] > byYear[a] ? y : a), over[0]);
   return `<br><span class="tag-mini" style="margin-left:0;">금융소득종합과세 대상</span> `
-    + `${over.length === 1 ? `${top}년` : `${over[0]}~${over[over.length - 1]}년 중 ${over.length}개 해`} 과세 분배금·매도차익이 연 2,000만원을 넘습니다`
-    + ` (최대 ${top}년 ${won(byYear[top])}). 이 계산은 15.4%만 반영해, 다른 소득에 따라 세금이 더 나오고 건보료도 늘 수 있습니다.`
+    + `${over.length === 1 ? `${top}년` : `${over[0]}~${over[over.length - 1]}년 중 ${over.length}개 해`} 과세 분배금·매도차익이 연 ${trMan(FIN_COMP_LINE)}만원을 넘습니다`
+    + ` (최대 ${top}년 ${won(byYear[top])}). 이 계산은 ${trPct(TR.FIN_INCOME.withholdingWithLocal)}%만 반영해, 다른 소득에 따라 세금이 더 나오고 건보료도 늘 수 있습니다.`
     + ' 매도차익은 시장가 기준 추정이라, 실제로는 과세표준기준가 상승분까지만 잡혀 이보다 작을 수 있습니다.';
 }
 const nm = c => D.etfs[c] ? D.etfs[c].n : c;
@@ -1406,7 +1417,7 @@ function runDuelUI() {
   const gainTax = (acc, code) => {
     if (o.taxMode !== 'general' || D.etfs[code].dom) return 0;
     const q = acc.sh[code] || 0, p = priceAt(D, code, o.i1);
-    return q && p ? Math.max(0, q * p - (acc.cost[code] || 0)) * 0.154 : 0;
+    return q && p ? Math.max(0, q * p - (acc.cost[code] || 0)) * TR.FIN_INCOME.withholdingWithLocal : 0;
   };
   const gA = gainTax(r.A, o.cc), gB = gainTax(r.B, o.base);
   const gainNote = (gA > 0 || gB > 0)
@@ -1591,7 +1602,7 @@ function runBtUI() {
     $('b-insight-desc').innerHTML = `커버드콜에서 나온 현금으로 성장형 ETF를 사 모으면, 커버드콜이 포기한 상승분을 일부 되찾는 효과가 있습니다. 대신 분배금에 세금이 붙는 일반계좌에서는 떼인 세금만큼 덜 삽니다. 위에서 처리 방식을 "같은 ETF에 재투자"로 바꿔 차이를 확인해 보세요.`;
   } else {
     $('b-insight-title').textContent = totA >= vB ? `이 기간엔 커버드콜 재투자가 ${won(totA - vB)} 앞섰습니다` : `이 기간엔 ${cmpName}가 ${won(vB - totA)} 앞섰습니다`;
-    $('b-insight-desc').innerHTML = `분배금을 전부 재투자해도 일반계좌에서는 분배금마다 세금(과세표준액 × 15.4%)을 떼고 다시 삽니다. 이 기간 낸 세금은 <strong>${won(r.A.tax)}</strong>입니다. 계좌를 절세계좌로 바꾸면 세금이 결과를 얼마나 바꾸는지 볼 수 있습니다.`;
+    $('b-insight-desc').innerHTML = `분배금을 전부 재투자해도 일반계좌에서는 분배금마다 세금(과세표준액 × ${trPct(TR.FIN_INCOME.withholdingWithLocal)}%)을 떼고 다시 삽니다. 이 기간 낸 세금은 <strong>${won(r.A.tax)}</strong>입니다. 계좌를 절세계좌로 바꾸면 세금이 결과를 얼마나 바꾸는지 볼 수 있습니다.`;
   }
   syncHash();
 }

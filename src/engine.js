@@ -8,7 +8,7 @@
  *              국내상장 해외 ETF 등(국내주식형 제외)을 팔면 (매도가 − 평균 단가) × 15.4% (추정)
  *  - 절세계좌: 세금 없음(과세이연)
  */
-const TAX = 0.154;
+const TAX = TTOKJAE_RULES.FIN_INCOME.withholdingWithLocal;   // 15.4% — 공용 제도 상수(rules.js), 브라우저·Node 모두 전역 TTOKJAE_RULES
 
 function makeData(raw) {
   const D = { dates: raw.dates, etfs: raw.etfs, divAt: {} };

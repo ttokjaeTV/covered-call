@@ -163,6 +163,22 @@ CASES = [
 ]
 
 JS = r"""
+// 공용 제도 상수(rules.js)를 브라우저처럼 전역 TTOKJAE_RULES로 둔다. 버전은 페이지의 <script src>에서 읽음.
+(function loadRules() {
+  const fs = require('fs'), path = require('path');
+  const html = ['template.html', '../src/template.html', '../index.html', 'index.html'].map(f => path.join(__dirname, f)).find(f => fs.existsSync(f) && /rules\/v[\d.]+\/rules\.js/.test(fs.readFileSync(f, 'utf8')));
+  const rel = fs.readFileSync(html, 'utf8').match(/rules\/v[\d.]+\/rules\.js/)[0];
+  let src = null;
+  for (let d = __dirname, i = 0; i < 6 && src === null; i++, d = path.dirname(d)) {
+    const f = path.join(d, 'ttokjaetv.github.io', rel);
+    if (fs.existsSync(f)) src = fs.readFileSync(f, 'utf8');
+  }
+  if (src === null) src = require('child_process').execFileSync(process.execPath, ['-e',
+    `fetch('https://ttokjaetv.github.io/${rel}').then(r => { if (!r.ok) throw new Error(r.status); return r.text(); }).then(t => process.stdout.write(t))`]).toString();
+  const m = { exports: {} };
+  new Function('module', 'exports', src)(m, m.exports);
+  global.TTOKJAE_RULES = m.exports;
+})();
 const fs=require('fs'); const eng=require(process.argv[2]);
 const raw=JSON.parse(fs.readFileSync(process.argv[3],'utf8')); const D=eng.makeData(raw);
 const cases=JSON.parse(process.argv[4]); const out=[];
