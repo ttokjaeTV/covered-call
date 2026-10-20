@@ -1197,9 +1197,12 @@ function finWarnHTML(byYear) {
   const over = Object.keys(byYear || {}).sort().filter(y => byYear[y] > FIN_COMP_LINE);
   if (!over.length) return '';
   const top = over.reduce((a, y) => (byYear[y] > byYear[a] ? y : a), over[0]);
+  // 만원 반올림하면 기준(2,000만원)과 같아 보이는 금액(예 20,000,200원)은 원 단위로 보여 넘은 게 보이게
+  const v = byYear[top];
+  const topText = Math.round(v / 10000) * 10000 <= FIN_COMP_LINE ? Math.ceil(v).toLocaleString() + '원' : won(v);
   return `<br><span class="tag-mini" style="margin-left:0;">금융소득종합과세 대상</span> `
     + `${over.length === 1 ? `${top}년` : `${over[0]}~${over[over.length - 1]}년 중 ${over.length}개 해`} 과세 분배금·매도차익이 연 ${trMan(FIN_COMP_LINE)}만원을 넘습니다`
-    + ` (최대 ${top}년 ${won(byYear[top])}). 이 계산은 ${trPct(TR.FIN_INCOME.withholdingWithLocal)}%만 반영해, 다른 소득에 따라 세금이 더 나오고 건보료도 늘 수 있습니다.`
+    + ` (최대 ${top}년 ${topText}). 이 계산은 ${trPct(TR.FIN_INCOME.withholdingWithLocal)}%만 반영해, 다른 소득에 따라 세금이 더 나오고 건보료도 늘 수 있습니다.`
     + ' 매도차익은 시장가 기준 추정이라, 실제로는 과세표준기준가 상승분까지만 잡혀 이보다 작을 수 있습니다.';
 }
 const nm = c => D.etfs[c] ? D.etfs[c].n : c;
