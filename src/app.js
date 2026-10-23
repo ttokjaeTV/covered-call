@@ -70,9 +70,21 @@ const ymdDot = s => `${s.slice(2, 4)}.${s.slice(4, 6)}`;
 /* 일반계좌에서 한 해 과세 금융소득(분배금 과세표준액 + 해외 ETF 매도차익)이 2,000만원을 넘으면 종합과세 경고.
    이 계산기는 15.4%만 반영하므로, 넘는 해를 알려 준다 (다른 금융소득·종합소득은 모름) */
 const FIN_COMP_LINE = TR.FIN_INCOME.threshold;
+// 가장 많은 해의 과세 금융소득을 금융소득종합과세·건보료 계산기로 넘기는 링크 (do = 그로스업 없는 배당, 만원)
+function finCalcLink(byYear, text) {
+  const ys = Object.keys(byYear || {}); if (!ys.length) return '';
+  const top = ys.reduce((a, y) => (byYear[y] > byYear[a] ? y : a), ys[0]);
+  return ` <a href="https://ttokjaetv.github.io/fin-income-tax/?do=${Math.round(byYear[top] / 1e4)}" target="_blank" rel="noopener" style="color:var(--accent);font-weight:800;white-space:nowrap;">${text} →</a>`;
+}
 function finWarnHTML(byYear) {
   const over = Object.keys(byYear || {}).sort().filter(y => byYear[y] > FIN_COMP_LINE);
-  if (!over.length) return '';
+  if (!over.length) {
+    // 종합과세까지는 아니어도 연 1,000만원을 넘는 해가 있으면 건보료에 반영됨
+    const nh = Object.keys(byYear || {}).sort().filter(y => byYear[y] > TR.NHIS.finIncomeThreshold);
+    if (!nh.length) return '';
+    return `<br><span class="tag-mini" style="margin-left:0;">건보료 반영</span> 과세 분배금·매도차익이 연 ${trMan(TR.NHIS.finIncomeThreshold)}만원을 넘는 해가 ${nh.length}개 있어, 지역가입자 건보료나 피부양자 자격에 영향을 줄 수 있습니다.`
+      + finCalcLink(byYear, '건보료 계산해 보기');
+  }
   const top = over.reduce((a, y) => (byYear[y] > byYear[a] ? y : a), over[0]);
   // 만원 반올림하면 기준(2,000만원)과 같아 보이는 금액(예 20,000,200원)은 원 단위로 보여 넘은 게 보이게
   const v = byYear[top];
@@ -80,7 +92,8 @@ function finWarnHTML(byYear) {
   return `<br><span class="tag-mini" style="margin-left:0;">금융소득종합과세 대상</span> `
     + `${over.length === 1 ? `${top}년` : `${over[0]}~${over[over.length - 1]}년 중 ${over.length}개 해`} 과세 분배금·매도차익이 연 ${trMan(FIN_COMP_LINE)}만원을 넘습니다`
     + ` (최대 ${top}년 ${topText}). 이 계산은 ${trPct(TR.FIN_INCOME.withholdingWithLocal)}%만 반영해, 다른 소득에 따라 세금이 더 나오고 건보료도 늘 수 있습니다.`
-    + ' 매도차익은 시장가 기준 추정이라, 실제로는 과세표준기준가 상승분까지만 잡혀 이보다 작을 수 있습니다.';
+    + ' 매도차익은 시장가 기준 추정이라, 실제로는 과세표준기준가 상승분까지만 잡혀 이보다 작을 수 있습니다.'
+    + finCalcLink(byYear, '종합과세·건보료 계산해 보기');
 }
 const nm = c => D.etfs[c] ? D.etfs[c].n : c;
 const signCls = v => v > 0 ? 'up' : v < 0 ? 'down' : '';
