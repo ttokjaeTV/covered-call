@@ -194,6 +194,9 @@
   .chart-container.sm { height: 300px; }
 
   /* 시나리오 표 */
+  .scroll-hint { display: none; margin: 12px 0 -8px; text-align: center; font-size: 12px; font-weight: 700; color: var(--ink-mute); }
+  @media (max-width: 864px) { .scroll-hint.sh-864 { display: block; } }
+  .scroll-hint:has(+ .tjl-box) { display: none !important; }
   .table-wrap { overflow-x: auto; margin-top: 16px; border-radius: 12px; }
   .data-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 760px; }
   .data-table th {

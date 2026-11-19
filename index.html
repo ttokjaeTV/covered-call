@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <script src="https://ttokjaetv.github.io/member-lock.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="/favicon.ico">
 <title>커버드콜 계산기 · 똑재TV</title>
 <meta name="description" content="국내상장 커버드콜 ETF 61종의 실제 종가·분배금·과세표준액으로, 분배금으로 생활했을 때와 본주를 팔아 생활했을 때를 비교합니다. 분배금 재투자 백테스트와 세대별 현황판 포함.">
 <meta property="og:title" content="커버드콜 계산기 · 똑재TV">
@@ -209,6 +210,9 @@
   .chart-container.sm { height: 300px; }
 
   /* 시나리오 표 */
+  .scroll-hint { display: none; margin: 12px 0 -8px; text-align: center; font-size: 12px; font-weight: 700; color: var(--ink-mute); }
+  @media (max-width: 864px) { .scroll-hint.sh-864 { display: block; } }
+  .scroll-hint:has(+ .tjl-box) { display: none !important; }
   .table-wrap { overflow-x: auto; margin-top: 16px; border-radius: 12px; }
   .data-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 760px; }
   .data-table th {
@@ -611,6 +615,7 @@
       <div class="card" data-member="연도별 표">
         <h3 class="chart-title">연도별 기록</h3>
         <p class="chart-subtitle">연도 마지막 거래일 기준입니다. 첫해와 마지막 해는 일부 기간입니다.</p>
+        <p class="scroll-hint sh-864" aria-hidden="true">← 옆으로 밀어 보세요 →</p>
         <div class="table-wrap">
           <table class="data-table" id="d-table">
             <thead><tr><th>연도</th><th>커버드콜 생활비</th><th>커버드콜 연말 자산</th><th>본주 생활비</th><th>본주 연말 자산</th><th>자산 차이 (본주 − 커버드콜)</th></tr></thead>
